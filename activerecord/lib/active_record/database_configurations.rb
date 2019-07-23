@@ -162,7 +162,7 @@ module ActiveRecord
           config_without_url.delete "url"
 
           ActiveRecord::DatabaseConfigurations::UrlConfig.new(env_name, spec_name, url, config_without_url)
-        elsif config["database"] || config["adapter"] || ENV["DATABASE_URL"]
+        elsif config["database"] || config["adapter"]
           ActiveRecord::DatabaseConfigurations::HashConfig.new(env_name, spec_name, config)
         end
       end
