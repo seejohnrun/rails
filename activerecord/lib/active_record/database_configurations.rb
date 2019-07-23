@@ -30,7 +30,8 @@ module ActiveRecord
     # * <tt>env_name:</tt> The environment name. Defaults to +nil+ which will collect
     #   configs for all environments.
     # * <tt>spec_name:</tt> The specification name (i.e. primary, animals, etc.). Defaults
-    #   to +nil+.
+    #   to +nil+. In the case that no envionment is passed, will return the first spec
+    #   of a given name, regardless of environment.
     # * <tt>include_replicas:</tt> Determines whether to include replicas in
     #   the returned list. Most of the time we're only iterating over the write
     #   connection (i.e. migrations don't need to run for the write and read connection).
