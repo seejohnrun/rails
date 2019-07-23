@@ -114,8 +114,6 @@ module ActiveRecord
       # Walk through the configuration in the case that it is nested, only
       # one level deep
       def walk_configs(env_name, config)
-        return nil unless config
-
         if config["url"] || config["database"] || config["adapter"]
           return build_db_configuration(env_name, PRIMARY_SPEC_NAME, config)
         end
@@ -128,6 +126,8 @@ module ActiveRecord
       # Given a String or Hash, process the configuration and return a proper
       # configuration object
       def build_db_configuration(env_name, spec_name, config)
+        return nil unless config
+
         env_key = "#{spec_name.upcase}_DATABASE_URL"
         if url = ENV[env_key]
           config = url
