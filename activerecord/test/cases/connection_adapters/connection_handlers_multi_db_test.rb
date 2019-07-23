@@ -262,8 +262,8 @@ module ActiveRecord
 
           config = {
             ENV["RAILS_ENV"] => {
-              "animals" => { adapter: "sqlite3", database: "db/animals.sqlite3" },
-              "primary" => { adapter: "sqlite3", database: "db/primary.sqlite3" }
+              "animals" => { "adapter": "sqlite3", "database": "db/animals.sqlite3" },
+              "primary" => { "adapter": "sqlite3", "database": "db/primary.sqlite3" }
             }
           }
           @prev_configs, ActiveRecord::Base.configurations = ActiveRecord::Base.configurations, config
@@ -284,8 +284,8 @@ module ActiveRecord
 
           config = {
             ENV["RAILS_ENV"] => {
-              "animals" => { adapter: "sqlite3", database: "db/animals.sqlite3" },
-              "primary" => { adapter: "sqlite3", database: "db/primary.sqlite3" }
+              "animals" => { "adapter": "sqlite3", "database": "db/animals.sqlite3" },
+              "primary" => { "adapter": "sqlite3", "database": "db/primary.sqlite3" }
             }
           }
           @prev_configs, ActiveRecord::Base.configurations = ActiveRecord::Base.configurations, config
@@ -307,8 +307,8 @@ module ActiveRecord
 
           config = {
             ENV["RAILS_ENV"] => {
-              "animals" => { adapter: "sqlite3", database: "db/animals.sqlite3" },
-              "primary" => { adapter: "sqlite3", database: "db/primary.sqlite3" }
+              "animals" => { "adapter": "sqlite3", "database": "db/animals.sqlite3" },
+              "primary" => { "adapter": "sqlite3", "database": "db/primary.sqlite3" }
             }
           }
           @prev_configs, ActiveRecord::Base.configurations = ActiveRecord::Base.configurations, config
