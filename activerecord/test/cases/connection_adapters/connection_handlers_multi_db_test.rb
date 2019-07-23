@@ -301,7 +301,7 @@ module ActiveRecord
           ENV["RAILS_ENV"] = previous_env
         end
 
-        def test_allows_overriding_primary_database_url
+        def test_allows_overriding_all_configs
           previous_database_url, ENV["DATABASE_URL"] = ENV["DATABASE_URL"], "postgres://localhost/foo"
           previous_env, ENV["RAILS_ENV"] = ENV["RAILS_ENV"], "default_env"
 
@@ -317,7 +317,7 @@ module ActiveRecord
           assert_equal({ "adapter" => "postgresql", "database" => "foo", "host" => "localhost" }, config)
 
           config = ActiveRecord::Base.configurations.configs_for(env_name: "default_env", spec_name: "animals").config
-          assert_equal({ "adapter" => "sqlite3", "database" => "db/animals.sqlite3" }, config)
+          assert_equal({ "adapter" => "postgresql", "database" => "foo", "host" => "localhost" }, config)
         ensure
           ActiveRecord::Base.configurations = @prev_configs
           ENV["DATABASE_URL"] = previous_database_url

@@ -131,7 +131,7 @@ module ActiveRecord
           config = url
         end
 
-        if spec_name == PRIMARY_SPEC_NAME && url = ENV["DATABASE_URL"]
+        if url = ENV["DATABASE_URL"]
           config = url
         end
 
@@ -162,22 +162,6 @@ module ActiveRecord
           ActiveRecord::DatabaseConfigurations::UrlConfig.new(env_name, spec_name, url, config_without_url)
         elsif config["database"] || config["adapter"]
           ActiveRecord::DatabaseConfigurations::HashConfig.new(env_name, spec_name, config)
-        end
-      end
-
-      def build_url_config(url, configs)
-        env = ActiveRecord::ConnectionHandling::DEFAULT_ENV.call.to_s
-
-        if configs.find(&:for_current_env?)
-          configs.map do |config|
-            if config.url_config?
-              config
-            else
-              ActiveRecord::DatabaseConfigurations::UrlConfig.new(config.env_name, config.spec_name, url, config.config)
-            end
-          end
-        else
-          configs + [ActiveRecord::DatabaseConfigurations::UrlConfig.new(env, PRIMARY_SPEC_NAME, url)]
         end
       end
 
