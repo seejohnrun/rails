@@ -105,7 +105,7 @@ module ActiveRecord
         return configs if configs.is_a?(Array)
 
         build_db_config = configs.flat_map do |env_name, config|
-          if config.is_a?(Hash) && !config["adapter"] && !config["database"]
+          if config.is_a?(Hash) && !config["adapter"] && !config["database"] && !ENV["DATABASE_URL"]
             walk_configs(env_name.to_s, config)
           else
             build_db_config_from_raw_config(env_name.to_s, "primary", config)
