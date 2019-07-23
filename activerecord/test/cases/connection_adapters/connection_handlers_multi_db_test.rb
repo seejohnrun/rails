@@ -257,8 +257,7 @@ module ActiveRecord
           ENV["RAILS_ENV"] = previous_env
         end
 
-        def test_obeys_per_environment_configruations
-          previous_database_url, ENV["PRIMARY_DATABASE_URL"] = ENV["PRIMARY_DATABASE_URL"], "postgres://localhost/foo"
+        def test_obeys_per_spec_configurations
           previous_env, ENV["RAILS_ENV"] = ENV["RAILS_ENV"], "default_env"
 
           config = {
@@ -271,6 +270,28 @@ module ActiveRecord
 
           config = ActiveRecord::Base.configurations.configs_for(env_name: "default_env", spec_name: "primary").config
           assert_equal({ "adapter" => "sqlite3", "database" => "db/primary.sqlite3" }, config)
+
+          config = ActiveRecord::Base.configurations.configs_for(env_name: "default_env", spec_name: "animals").config
+          assert_equal({ "adapter" => "sqlite3", "database" => "db/animals.sqlite3" }, config)
+        ensure
+          ActiveRecord::Base.configurations = @prev_configs
+          ENV["RAILS_ENV"] = previous_env
+        end
+
+        def test_allows_overriding_database_urls
+          previous_database_url, ENV["PRIMARY_DATABASE_URL"] = ENV["PRIMARY_DATABASE_URL"], "postgres://localhost/foo"
+          previous_env, ENV["RAILS_ENV"] = ENV["RAILS_ENV"], "default_env"
+
+          config = {
+            ENV["RAILS_ENV"] => {
+              "animals" => { adapter: "sqlite3", database: "db/animals.sqlite3" },
+              "primary" => { adapter: "sqlite3", database: "db/primary.sqlite3" }
+            }
+          }
+          @prev_configs, ActiveRecord::Base.configurations = ActiveRecord::Base.configurations, config
+
+          config = ActiveRecord::Base.configurations.configs_for(env_name: "default_env", spec_name: "primary").config
+          assert_equal({ "adapter" => "postgresql", "database" => "foo", "host" => "localhost" }, config)
 
           config = ActiveRecord::Base.configurations.configs_for(env_name: "default_env", spec_name: "animals").config
           assert_equal({ "adapter" => "sqlite3", "database" => "db/animals.sqlite3" }, config)

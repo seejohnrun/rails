@@ -126,6 +126,11 @@ module ActiveRecord
       # Given a String or Hash, process the configuration and return a proper
       # configuration object
       def build_db_configuration(env_name, spec_name, config)
+        env_key = "#{spec_name.upcase}_DATABASE_URL"
+        if url = ENV[env_key]
+          config = url
+        end
+
         case config
         when String
           build_db_config_from_string(env_name, spec_name, config)
