@@ -12,6 +12,8 @@ module ActiveRecord
     attr_reader :configurations
     delegate :any?, to: :configurations
 
+    PRIMARY_SPEC_NAME = "primary".freeze
+
     def initialize(configurations = {})
       @configurations = build_configs(configurations)
     end
@@ -115,7 +117,7 @@ module ActiveRecord
         return nil unless config
 
         if config["url"] || config["database"] || config["adapter"]
-          return build_db_configuration(env_name, "primary", config)
+          return build_db_configuration(env_name, PRIMARY_SPEC_NAME, config)
         end
 
         config.map do |spec_name, spec_config|
@@ -131,7 +133,7 @@ module ActiveRecord
           config = url
         end
 
-        if spec_name == "primary" && url = ENV["DATABASE_URL"]
+        if spec_name == PRIMARY_SPEC_NAME && url = ENV["DATABASE_URL"]
           config = url
         end
 
@@ -177,7 +179,7 @@ module ActiveRecord
             end
           end
         else
-          configs + [ActiveRecord::DatabaseConfigurations::UrlConfig.new(env, "primary", url)]
+          configs + [ActiveRecord::DatabaseConfigurations::UrlConfig.new(env, PRIMARY_SPEC_NAME, url)]
         end
       end
 
