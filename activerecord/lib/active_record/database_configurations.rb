@@ -104,9 +104,13 @@ module ActiveRecord
         return configs.configurations if configs.is_a?(DatabaseConfigurations)
         return configs if configs.is_a?(Array)
 
-        build_db_config = configs.each_pair.flat_map do |env_name, config|
-          build_db_config_from_raw_config(env_name.to_s, "primary", config)
-        end.flatten.compact
+        build_db_config = configs.flat_map do |env_name, config|
+          if config.is_a?(Hash) && !config["adapter"] && !config["database"]
+            walk_configs(env_name.to_s, config)
+          else
+            build_db_config_from_raw_config(env_name.to_s, "primary", config)
+          end
+        end.compact
 
         if url = ENV["DATABASE_URL"]
           build_url_config(url, build_db_config)
@@ -116,8 +120,8 @@ module ActiveRecord
       end
 
       def walk_configs(env_name, config)
-        config.each_pair.map do |sub_spec_name, sub_config|
-          build_db_config_from_raw_config(env_name, sub_spec_name, sub_config)
+        config.map do |spec_name, sub_config|
+          build_db_config_from_raw_config(env_name, spec_name.to_s, sub_config)
         end
       end
 
@@ -147,10 +151,8 @@ module ActiveRecord
           config_without_url.delete "url"
 
           ActiveRecord::DatabaseConfigurations::UrlConfig.new(env_name, spec_name, url, config_without_url)
-        elsif config["database"] || config["adapter"] || ENV["DATABASE_URL"]
-          ActiveRecord::DatabaseConfigurations::HashConfig.new(env_name, spec_name, config)
         else
-          walk_configs(env_name, config)
+          ActiveRecord::DatabaseConfigurations::HashConfig.new(env_name, spec_name, config)
         end
       end
 
