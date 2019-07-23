@@ -105,7 +105,7 @@ module ActiveRecord
         return configs if configs.is_a?(Array)
 
         build_db_config = configs.each_pair.flat_map do |env_name, config|
-          walk_configs(env_name.to_s, "primary", config)
+          build_db_config_from_raw_config(env_name.to_s, "primary", config)
         end.flatten.compact
 
         if url = ENV["DATABASE_URL"]
@@ -116,6 +116,10 @@ module ActiveRecord
       end
 
       def walk_configs(env_name, spec_name, config)
+        build_db_config_from_raw_config(env_name, spec_name, config)
+      end
+
+      def build_db_config_from_raw_config(env_name, spec_name, config)
         case config
         when String
           build_db_config_from_string(env_name, spec_name, config)
