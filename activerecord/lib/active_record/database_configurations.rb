@@ -104,18 +104,28 @@ module ActiveRecord
         return configs.configurations if configs.is_a?(DatabaseConfigurations)
         return configs if configs.is_a?(Array)
 
-        build_db_config = configs.each_pair.flat_map do |env_name, config|
-          walk_configs(env_name.to_s, "primary", config)
+        configs.each_pair.map do |env_name, config|
+          walk_configs(env_name.to_s, config)
         end.flatten.compact
+      end
 
-        if url = ENV["DATABASE_URL"]
-          build_url_config(url, build_db_config)
-        else
-          build_db_config
+      # Walk through the configuration in the case that it is nested, only
+      # one level deep
+      def walk_configs(env_name, config)
+        return nil unless config
+
+        if config["url"] || config["database"] || config["adapter"]
+          return build_db_configuration(env_name, "primary", config)
+        end
+
+        config.map do |spec_name, spec_config|
+          build_db_configuration(env_name, spec_name, spec_config)
         end
       end
 
-      def walk_configs(env_name, spec_name, config)
+      # Given a String or Hash, process the configuration and return a proper
+      # configuration object
+      def build_db_configuration(env_name, spec_name, config)
         case config
         when String
           build_db_config_from_string(env_name, spec_name, config)
@@ -143,10 +153,6 @@ module ActiveRecord
           ActiveRecord::DatabaseConfigurations::UrlConfig.new(env_name, spec_name, url, config_without_url)
         elsif config["database"] || config["adapter"] || ENV["DATABASE_URL"]
           ActiveRecord::DatabaseConfigurations::HashConfig.new(env_name, spec_name, config)
-        else
-          config.each_pair.map do |sub_spec_name, sub_config|
-            walk_configs(env_name, sub_spec_name, sub_config)
-          end
         end
       end
 
