@@ -126,8 +126,6 @@ module ActiveRecord
       # Given a String or Hash, process the configuration and return a proper
       # configuration object
       def build_db_configuration(env_name, spec_name, config)
-        return nil unless config
-
         env_key = "#{spec_name.upcase}_DATABASE_URL"
         if url = ENV[env_key]
           config = url
