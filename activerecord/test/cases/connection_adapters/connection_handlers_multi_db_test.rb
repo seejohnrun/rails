@@ -324,6 +324,24 @@ module ActiveRecord
           ENV["RAILS_ENV"] = previous_env
         end
 
+        def test_allows_setting_primary_database_on_non_tiered_config
+          previous_database_url, ENV["DATABASE_URL"] = ENV["DATABASE_URL"], "postgres://localhost/foo"
+          previous_env, ENV["RAILS_ENV"] = ENV["RAILS_ENV"], "default_env"
+
+          config = {
+            ENV["RAILS_ENV"] => { "adapter" => "sqlite3", "database" =>  "db/primary.sqlite3" }
+          }
+
+          @prev_configs, ActiveRecord::Base.configurations = ActiveRecord::Base.configurations, config
+
+          config = ActiveRecord::Base.configurations.configs_for(env_name: "default_env", spec_name: "primary").config
+          assert_equal({ "adapter" => "postgresql", "database" => "foo", "host" => "localhost" }, config)
+        ensure
+          ActiveRecord::Base.configurations = @prev_configs
+          ENV["DATABASE_URL"] = previous_database_url
+          ENV["RAILS_ENV"] = previous_env
+        end
+
         def test_connects_to_with_single_configuration
           config = {
             "development" => { "adapter" => "sqlite3", "database" => "db/primary.sqlite3" },
