@@ -131,6 +131,10 @@ module ActiveRecord
           config = url
         end
 
+        if spec_name == "primary" && url = ENV["DATABASE_URL"]
+          config = url
+        end
+
         case config
         when String
           build_db_config_from_string(env_name, spec_name, config)
