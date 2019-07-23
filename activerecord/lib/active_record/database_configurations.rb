@@ -115,8 +115,10 @@ module ActiveRecord
         end
       end
 
-      def walk_configs(env_name, spec_name, config)
-        build_db_config_from_raw_config(env_name, spec_name, config)
+      def walk_configs(env_name, config)
+        config.each_pair.map do |sub_spec_name, sub_config|
+          build_db_config_from_raw_config(env_name, sub_spec_name, sub_config)
+        end
       end
 
       def build_db_config_from_raw_config(env_name, spec_name, config)
@@ -148,9 +150,7 @@ module ActiveRecord
         elsif config["database"] || config["adapter"] || ENV["DATABASE_URL"]
           ActiveRecord::DatabaseConfigurations::HashConfig.new(env_name, spec_name, config)
         else
-          config.each_pair.map do |sub_spec_name, sub_config|
-            walk_configs(env_name, sub_spec_name, sub_config)
-          end
+          walk_configs(env_name, config)
         end
       end
 
