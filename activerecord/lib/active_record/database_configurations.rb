@@ -104,8 +104,8 @@ module ActiveRecord
         return configs.configurations if configs.is_a?(DatabaseConfigurations)
         return configs if configs.is_a?(Array)
 
-        build_db_config = configs.flat_map do |env_name, config|
-          if config.is_a?(Hash) && !config["adapter"] && !config["database"] && !ENV["DATABASE_URL"]
+        db_configs = configs.flat_map do |env_name, config|
+          if config.is_a?(Hash) && config.all? { |k, v| v.is_a?(Hash) }
             walk_configs(env_name.to_s, config)
           else
             build_db_config_from_raw_config(env_name.to_s, "primary", config)
@@ -113,9 +113,9 @@ module ActiveRecord
         end.compact
 
         if url = ENV["DATABASE_URL"]
-          build_url_config(url, build_db_config)
+          merge_url_with_configs(url, db_configs)
         else
-          build_db_config
+          db_configs
         end
       end
 
@@ -156,7 +156,7 @@ module ActiveRecord
         end
       end
 
-      def build_url_config(url, configs)
+      def merge_url_with_configs(url, configs)
         env = ActiveRecord::ConnectionHandling::DEFAULT_ENV.call.to_s
 
         if configs.find(&:for_current_env?)
