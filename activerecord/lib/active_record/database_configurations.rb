@@ -61,7 +61,7 @@ module ActiveRecord
     #   { database: "my_db", adapter: "mysql2" }
     def default_hash(env = ActiveRecord::ConnectionHandling::DEFAULT_ENV.call.to_s)
       default = find_db_config(env)
-      default.config if default
+      default.config_whitelisted if default
     end
     alias :[] :default_hash
 
@@ -96,14 +96,14 @@ module ActiveRecord
     def each
       throw_getter_deprecation(:each)
       configurations.each { |config|
-        yield [config.env_name, config.config]
+        yield [config.env_name, config.config_whitelisted]
       }
     end
 
     def first
       throw_getter_deprecation(:first)
       config = configurations.first
-      [config.env_name, config.config]
+      [config.env_name, config.config_whitelisted]
     end
 
     private
@@ -179,7 +179,7 @@ module ActiveRecord
         configs.map do |config|
           next config if config.url_config? || config.env_name != current_env
 
-          url_config = environment_url_config(current_env, config.spec_name, config.config)
+          url_config = environment_url_config(current_env, config.spec_name, config.config_whitelisted)
           url_config || config
         end
       end
@@ -205,7 +205,7 @@ module ActiveRecord
           configs_for(env_name: args.first)
         when :values
           throw_getter_deprecation(method)
-          configurations.map(&:config)
+          configurations.map(&:config_whitelisted)
         when :[]=
           throw_setter_deprecation(method)
 

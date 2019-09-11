@@ -351,7 +351,7 @@ module ActiveRecord
         }
 
         configs = ActiveRecord::DatabaseConfigurations.new(config)
-        actual = configs.configs_for(env_name: "default_env", spec_name: "primary").config
+        actual = configs.configs_for(env_name: "default_env", spec_name: "primary").config_whitelisted
         expected = {
           "adapter"  => "postgresql",
           "database" => "foo",
@@ -362,7 +362,7 @@ module ActiveRecord
         assert_equal expected, actual
 
         configs = ActiveRecord::DatabaseConfigurations.new(config)
-        actual = configs.configs_for(env_name: "default_env", spec_name: "animals").config
+        actual = configs.configs_for(env_name: "default_env", spec_name: "animals").config_whitelisted
         expected = { "pool" => 5 }
 
         assert_equal expected, actual
@@ -381,11 +381,11 @@ module ActiveRecord
         }
 
         configs = ActiveRecord::DatabaseConfigurations.new(config)
-        actual = configs.configs_for(env_name: "default_env", spec_name: "primary").config
+        actual = configs.configs_for(env_name: "default_env", spec_name: "primary").config_whitelisted
         assert_equal "primary", actual["database"]
 
         configs = ActiveRecord::DatabaseConfigurations.new(config)
-        actual = configs.configs_for(env_name: "default_env", spec_name: "animals").config
+        actual = configs.configs_for(env_name: "default_env", spec_name: "animals").config_whitelisted
         assert_equal "animals", actual["database"]
       ensure
         ENV.delete("PRIMARY_DATABASE_URL")

@@ -224,7 +224,7 @@ module ActiveRecord
 
       def truncate_all(environment = env)
         ActiveRecord::Base.configurations.configs_for(env_name: environment).each do |db_config|
-          truncate_tables db_config.config
+          truncate_tables db_config.config_whitelisted
         end
       end
 
@@ -475,14 +475,14 @@ module ActiveRecord
             ActiveRecord::Base.configurations.configs_for(env_name: env).each do |db_config|
               next if spec_name && spec_name != db_config.spec_name
 
-              yield db_config.config, db_config.spec_name, env
+              yield db_config.config_whitelisted, db_config.spec_name, env
             end
           end
         end
 
         def each_local_configuration
           ActiveRecord::Base.configurations.configs_for.each do |db_config|
-            configuration = db_config.config
+            configuration = db_config.config_whitelisted
             next unless configuration["database"]
 
             if local_database?(configuration)
