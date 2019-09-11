@@ -9,7 +9,7 @@ module ActiveRecord
         def resolve(spec, config = {})
           configs = ActiveRecord::DatabaseConfigurations.new(config)
           resolver = ConnectionAdapters::ConnectionSpecification::Resolver.new(configs)
-          resolver.resolve(spec, spec)
+          resolver.resolve(spec, spec).config_whitelisted
         end
 
         def spec(spec, config = {})

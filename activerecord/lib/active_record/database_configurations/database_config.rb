@@ -25,6 +25,11 @@ module ActiveRecord
         false
       end
 
+      # TODO remove this method
+      def config_whitelisted
+        config
+      end
+
       def to_legacy_hash
         { env_name => config }
       end

@@ -25,7 +25,7 @@ module ActiveRecord
       def resolve_spec(spec, config)
         configs = ActiveRecord::DatabaseConfigurations.new(config)
         resolver = ConnectionAdapters::ConnectionSpecification::Resolver.new(configs)
-        resolver.resolve(spec, spec)
+        resolver.resolve(spec, spec).config_whitelisted
       end
 
       def test_invalid_string_config

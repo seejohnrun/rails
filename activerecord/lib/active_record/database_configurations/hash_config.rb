@@ -28,6 +28,8 @@ module ActiveRecord
       def initialize(env_name, spec_name, config)
         super(env_name, spec_name)
         @config = config
+
+        resolve_url_key
       end
 
       # Determines whether a database configuration is for a replica / readonly
@@ -46,6 +48,13 @@ module ActiveRecord
 
       private
         attr_reader :config
+
+        def resolve_url_key
+          if config["url"] && !config["url"].match?(/^jdbc:/)
+            connection_hash = ConnectionUrlResolver.new(url).to_hash
+            config.merge!(connection_hash)
+          end
+        end
     end
   end
 end
