@@ -5,18 +5,22 @@ require "uri"
 module ActiveRecord
   module ConnectionAdapters
     class ConnectionSpecification #:nodoc:
-      attr_reader :name, :config, :adapter_method
+      attr_reader :name, :adapter_method, :db_config
 
-      def initialize(name, config, adapter_method)
-        @name, @config, @adapter_method = name, config, adapter_method
+      def initialize(name, db_config, adapter_method)
+        @name, @db_config, @adapter_method = name, db_config, adapter_method
+      end
+
+      def config
+        @db_config.config_whitelisted
       end
 
       def initialize_dup(original)
-        @config = original.config.dup
+        @db_config = original.db_config.dup
       end
 
       def to_hash
-        @config.merge(name: @name)
+        config.dup.merge(name: @name)
       end
 
       # Expands a connection string into a hash.
@@ -133,14 +137,15 @@ module ActiveRecord
         def spec(config)
           pool_name = config if config.is_a?(Symbol)
 
-          spec = resolve(config, pool_name).config_whitelisted.symbolize_keys
+          db_config = resolve(config, pool_name)
+          spec = db_config.config_whitelisted
 
-          raise(AdapterNotSpecified, "database configuration does not specify adapter") unless spec.key?(:adapter)
+          raise(AdapterNotSpecified, "database configuration does not specify adapter") unless spec.key?("adapter")
 
           # Require the adapter itself and give useful feedback about
           #   1. Missing adapter gems and
           #   2. Adapter gems' missing dependencies.
-          path_to_adapter = "active_record/connection_adapters/#{spec[:adapter]}_adapter"
+          path_to_adapter = "active_record/connection_adapters/#{spec["adapter"]}_adapter"
           begin
             require path_to_adapter
           rescue LoadError => e
@@ -149,22 +154,22 @@ module ActiveRecord
             if e.path == path_to_adapter
               # We can assume that a non-builtin adapter was specified, so it's
               # either misspelled or missing from Gemfile.
-              raise LoadError, "Could not load the '#{spec[:adapter]}' Active Record adapter. Ensure that the adapter is spelled correctly in config/database.yml and that you've added the necessary adapter gem to your Gemfile.", e.backtrace
+              raise LoadError, "Could not load the '#{spec["adapter"]}' Active Record adapter. Ensure that the adapter is spelled correctly in config/database.yml and that you've added the necessary adapter gem to your Gemfile.", e.backtrace
 
             # Bubbled up from the adapter require. Prefix the exception message
             # with some guidance about how to address it and reraise.
             else
-              raise LoadError, "Error loading the '#{spec[:adapter]}' Active Record adapter. Missing a gem it depends on? #{e.message}", e.backtrace
+              raise LoadError, "Error loading the '#{spec["adapter"]}' Active Record adapter. Missing a gem it depends on? #{e.message}", e.backtrace
             end
           end
 
-          adapter_method = "#{spec[:adapter]}_connection"
+          adapter_method = "#{spec["adapter"]}_connection"
 
           unless ActiveRecord::Base.respond_to?(adapter_method)
-            raise AdapterNotFound, "database configuration specifies nonexistent #{spec.config[:adapter]} adapter"
+            raise AdapterNotFound, "database configuration specifies nonexistent #{spec.config["adapter"]} adapter"
           end
 
-          ConnectionSpecification.new(spec.delete(:name) || "primary", spec, adapter_method)
+          ConnectionSpecification.new(spec.delete("name") || "primary", db_config, adapter_method)
         end
 
         # Returns fully resolved connection, accepts hash, string or symbol.

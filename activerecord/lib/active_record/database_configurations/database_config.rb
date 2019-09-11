@@ -13,6 +13,10 @@ module ActiveRecord
         @spec_name = spec_name
       end
 
+      def initialize_dup(original)
+        @config = original.config_whitelisted.dup
+      end
+
       def replica?
         raise NotImplementedError
       end

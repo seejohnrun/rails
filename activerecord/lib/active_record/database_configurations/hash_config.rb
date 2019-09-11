@@ -27,7 +27,7 @@ module ActiveRecord
     class HashConfig < DatabaseConfig
       def initialize(env_name, spec_name, config)
         super(env_name, spec_name)
-        @config = config
+        @config = config.stringify_keys
 
         resolve_url_key
       end

@@ -33,7 +33,7 @@ module ActiveRecord
 
       def initialize(env_name, spec_name, url, config = {})
         super(env_name, spec_name)
-        @config = build_config(config, url)
+        @config = build_config(config, url).stringify_keys
         @url = url
       end
 
