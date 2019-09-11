@@ -227,7 +227,7 @@ module ActiveRecord
     #
     # Please use only for reading.
     def connection_config
-      connection_pool.spec.config
+      connection_pool.spec.config_whitelisted
     end
 
     def connection_pool

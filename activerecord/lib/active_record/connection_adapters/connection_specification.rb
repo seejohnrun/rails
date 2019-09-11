@@ -11,7 +11,7 @@ module ActiveRecord
         @name, @db_config, @adapter_method = name, db_config, adapter_method
       end
 
-      def config
+      def config_whitelisted
         @db_config.config_whitelisted
       end
 
@@ -20,7 +20,7 @@ module ActiveRecord
       end
 
       def to_hash
-        config.dup.merge(name: @name)
+        @db_config.config_whitelisted.dup.merge(name: @name)
       end
 
       # Expands a connection string into a hash.

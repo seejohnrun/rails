@@ -25,6 +25,27 @@ module ActiveRecord
         raise NotImplementedError
       end
 
+      def checkout_timeout
+        config.fetch("checkout_timeout", 5).to_f
+      end
+
+      def idle_timeout
+        idle_timeout = config.fetch("idle_timeout", 300).to_f
+        idle_timeout if idle_timeout > 0
+      end
+
+      def pool
+        config.fetch("pool", 5).to_i
+      end
+
+      def reaping_frequency
+        config.fetch("reaping_frequency", 60).to_f
+      end
+
+      def database
+        config["database"]
+      end
+
       def url_config?
         false
       end

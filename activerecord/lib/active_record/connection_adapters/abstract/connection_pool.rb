@@ -384,15 +384,11 @@ module ActiveRecord
         super()
 
         @spec = spec
+        db_config = spec.db_config
 
-        @checkout_timeout = (spec.config[:checkout_timeout] && spec.config[:checkout_timeout].to_f) || 5
-        if @idle_timeout = spec.config.fetch(:idle_timeout, 300)
-          @idle_timeout = @idle_timeout.to_f
-          @idle_timeout = nil if @idle_timeout <= 0
-        end
-
-        # default max pool size to 5
-        @size = (spec.config[:pool] && spec.config[:pool].to_i) || 5
+        @checkout_timeout = db_config.checkout_timeout
+        @idle_timeout = db_config.idle_timeout
+        @size = db_config.pool
 
         # This variable tracks the cache of threads mapped to reserved connections, with the
         # sole purpose of speeding up the +connection+ method. It is not the authoritative
@@ -422,8 +418,7 @@ module ActiveRecord
 
         # +reaping_frequency+ is configurable mostly for historical reasons, but it could
         # also be useful if someone wants a very low +idle_timeout+.
-        reaping_frequency = spec.config.fetch(:reaping_frequency, 60)
-        @reaper = Reaper.new(self, reaping_frequency && reaping_frequency.to_f)
+        @reaper = Reaper.new(self, db_config.reaping_frequency)
         @reaper.run
       end
 
@@ -899,7 +894,7 @@ module ActiveRecord
         alias_method :release, :remove_connection_from_thread_cache
 
         def new_connection
-          Base.send(spec.adapter_method, spec.config).tap do |conn|
+          Base.send(spec.adapter_method, spec.config_whitelisted).tap do |conn|
             conn.check_version
           end
         end
@@ -1074,7 +1069,7 @@ module ActiveRecord
         }
         if spec
           payload[:spec_name] = spec.name
-          payload[:config] = spec.config
+          payload[:config] = spec.config_whitelisted
         end
 
         message_bus.instrument("!connection.active_record", payload) do
@@ -1149,7 +1144,7 @@ module ActiveRecord
         if pool = owner_to_pool.delete(spec_name)
           pool.automatic_reconnect = false
           pool.disconnect!
-          pool.spec.config
+          pool.spec.config_whitelisted
         end
       end
 
