@@ -184,7 +184,6 @@ module ActiveRecord
       self.connection_specification_name = pool_name
 
       resolver = ConnectionAdapters::ConnectionSpecification::Resolver.new(Base.configurations)
-      # TODO eileenjohn
       config_hash = resolver.resolve(config_or_env, pool_name).config_whitelisted.symbolize_keys
       config_hash[:name] = pool_name
 

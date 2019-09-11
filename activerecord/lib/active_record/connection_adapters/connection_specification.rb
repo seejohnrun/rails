@@ -133,7 +133,6 @@ module ActiveRecord
         def spec(config)
           pool_name = config if config.is_a?(Symbol)
 
-          # TODO eileenjohn
           spec = resolve(config, pool_name).config_whitelisted.symbolize_keys
 
           raise(AdapterNotSpecified, "database configuration does not specify adapter") unless spec.key?(:adapter)
@@ -226,7 +225,6 @@ module ActiveRecord
             db_config = configurations.find_db_config(env_name)
 
             if db_config
-              # TODO eileenjohn
               config = db_config.config_whitelisted.merge("name" => pool_name.to_s)
               DatabaseConfigurations::HashConfig.new(db_config.env_name, db_config.spec_name, config)
             else

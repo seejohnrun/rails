@@ -25,7 +25,6 @@ module ActiveRecord
         false
       end
 
-      # TODO remove this method
       def config_whitelisted
         config
       end
