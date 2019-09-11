@@ -25,8 +25,6 @@ module ActiveRecord
     #   database adapter, name, and other important information for database
     #   connections.
     class HashConfig < DatabaseConfig
-      attr_reader :config
-
       def initialize(env_name, spec_name, config)
         super(env_name, spec_name)
         @config = config
@@ -45,6 +43,9 @@ module ActiveRecord
       def migrations_paths
         config["migrations_paths"]
       end
+
+      private
+        attr_reader :config
     end
   end
 end
