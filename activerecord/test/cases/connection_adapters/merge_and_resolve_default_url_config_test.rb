@@ -25,7 +25,7 @@ module ActiveRecord
       def resolve_spec(spec, config)
         configs = ActiveRecord::DatabaseConfigurations.new(config)
         resolver = ConnectionAdapters::ConnectionSpecification::Resolver.new(configs)
-        resolver.resolve(spec, spec).config_whitelisted
+        resolver.resolve(spec, spec).config
       end
 
       def test_invalid_string_config
@@ -351,7 +351,7 @@ module ActiveRecord
         }
 
         configs = ActiveRecord::DatabaseConfigurations.new(config)
-        actual = configs.configs_for(env_name: "default_env", spec_name: "primary").config_whitelisted
+        actual = configs.configs_for(env_name: "default_env", spec_name: "primary").config
         expected = {
           "adapter"  => "postgresql",
           "database" => "foo",
@@ -362,7 +362,7 @@ module ActiveRecord
         assert_equal expected, actual
 
         configs = ActiveRecord::DatabaseConfigurations.new(config)
-        actual = configs.configs_for(env_name: "default_env", spec_name: "animals").config_whitelisted
+        actual = configs.configs_for(env_name: "default_env", spec_name: "animals").config
         expected = { "pool" => 5 }
 
         assert_equal expected, actual
@@ -381,11 +381,11 @@ module ActiveRecord
         }
 
         configs = ActiveRecord::DatabaseConfigurations.new(config)
-        actual = configs.configs_for(env_name: "default_env", spec_name: "primary").config_whitelisted
+        actual = configs.configs_for(env_name: "default_env", spec_name: "primary").config
         assert_equal "primary", actual["database"]
 
         configs = ActiveRecord::DatabaseConfigurations.new(config)
-        actual = configs.configs_for(env_name: "default_env", spec_name: "animals").config_whitelisted
+        actual = configs.configs_for(env_name: "default_env", spec_name: "animals").config
         assert_equal "animals", actual["database"]
       ensure
         ENV.delete("PRIMARY_DATABASE_URL")

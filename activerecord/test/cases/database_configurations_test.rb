@@ -36,7 +36,7 @@ class DatabaseConfigurationsTest < ActiveRecord::TestCase
     original_rails_env = ENV["RAILS_ENV"]
     ENV["RAILS_ENV"] = "arunit"
 
-    assert_equal ActiveRecord::Base.configurations.configs_for(env_name: "arunit", spec_name: "primary").config_whitelisted, ActiveRecord::Base.configurations.default_hash
+    assert_equal ActiveRecord::Base.configurations.configs_for(env_name: "arunit", spec_name: "primary").config, ActiveRecord::Base.configurations.default_hash
   ensure
     ENV["RAILS_ENV"] = original_rails_env
   end
@@ -89,7 +89,7 @@ class LegacyDatabaseConfigurationsTest < ActiveRecord::TestCase
   end
 
   def test_first_is_deprecated
-    first_config = ActiveRecord::Base.configurations.configurations.map(&:config_whitelisted).first
+    first_config = ActiveRecord::Base.configurations.configurations.map(&:config).first
     assert_deprecated do
       env_name, config = ActiveRecord::Base.configurations.first
       assert_equal "arunit", env_name
@@ -106,7 +106,7 @@ class LegacyDatabaseConfigurationsTest < ActiveRecord::TestCase
   end
 
   def test_values_are_deprecated
-    config_hashes = ActiveRecord::Base.configurations.configurations.map(&:config_whitelisted)
+    config_hashes = ActiveRecord::Base.configurations.configurations.map(&:config)
     assert_deprecated do
       assert_equal config_hashes, ActiveRecord::Base.configurations.values
     end

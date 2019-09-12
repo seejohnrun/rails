@@ -172,7 +172,7 @@ module ActiveRecord
           assert_instance_of ActiveRecord::DatabaseConfigurations::HashConfig, db_config
           assert_instance_of String, db_config.env_name
           assert_instance_of String, db_config.spec_name
-          db_config.config_whitelisted.keys.each do |key|
+          db_config.config.keys.each do |key|
             assert_instance_of String, key
           end
         end
