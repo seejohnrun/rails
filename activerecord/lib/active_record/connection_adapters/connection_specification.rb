@@ -12,7 +12,7 @@ module ActiveRecord
       end
 
       def config
-        @db_config.config_whitelisted
+        @db_config.config
       end
 
       def initialize_dup(original)
@@ -138,7 +138,7 @@ module ActiveRecord
           pool_name = config if config.is_a?(Symbol)
 
           db_config = resolve(config, pool_name)
-          spec = db_config.config_whitelisted
+          spec = db_config.config
 
           raise(AdapterNotSpecified, "database configuration does not specify adapter") unless spec.key?("adapter")
 
@@ -230,7 +230,7 @@ module ActiveRecord
             db_config = configurations.find_db_config(env_name)
 
             if db_config
-              config = db_config.config_whitelisted.merge("name" => pool_name.to_s)
+              config = db_config.config.merge("name" => pool_name.to_s)
               DatabaseConfigurations::HashConfig.new(db_config.env_name, db_config.spec_name, config)
             else
               raise AdapterNotSpecified, <<~MSG

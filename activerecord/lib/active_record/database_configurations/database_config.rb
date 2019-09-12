@@ -14,7 +14,7 @@ module ActiveRecord
       end
 
       def initialize_dup(original)
-        @config = original.config_whitelisted.dup
+        @config = original.config.dup
       end
 
       def replica?
@@ -29,7 +29,7 @@ module ActiveRecord
         false
       end
 
-      def config_whitelisted
+      def config
         config
       end
 

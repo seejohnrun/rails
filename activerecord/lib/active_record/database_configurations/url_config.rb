@@ -29,7 +29,7 @@ module ActiveRecord
     #   database adapter, name, and other important information for database
     #   connections.
     class UrlConfig < DatabaseConfig
-      attr_reader :url
+      attr_reader :url, :config
 
       def initialize(env_name, spec_name, url, config = {})
         super(env_name, spec_name)
@@ -56,8 +56,6 @@ module ActiveRecord
       end
 
       private
-        attr_reader :config
-
         def build_url_hash(url)
           if url.nil? || /^jdbc:/.match?(url)
             { "url" => url }
