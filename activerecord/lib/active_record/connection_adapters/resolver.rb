@@ -86,7 +86,7 @@ module ActiveRecord
         when String
           DatabaseConfigurations::UrlConfig.new(env, "primary", config_or_env)
         when Hash
-          DatabaseConfigurations::HashConfig.new(env, "primary", config_or_env)
+          resolve_hash_connection(env, config_or_env)
         when DatabaseConfigurations::DatabaseConfig
           config_or_env
         else
@@ -95,6 +95,19 @@ module ActiveRecord
       end
 
       private
+        # Copied from DatabaseConfigurations
+        def resolve_hash_connection(env_name, config)
+          if config.has_key?(:url)
+            url = config[:url]
+            config_without_url = config.dup
+            config_without_url.delete :url
+
+            ActiveRecord::DatabaseConfigurations::UrlConfig.new(env_name, "primary", url, config_without_url)
+          else
+            ActiveRecord::DatabaseConfigurations::HashConfig.new(env_name, "primary", config)
+          end
+        end
+
         # Takes the environment such as +:production+ or +:development+ and a
         # pool name the corresponds to the name given by the connection pool
         # to the connection. That pool name is merged into the hash with the
