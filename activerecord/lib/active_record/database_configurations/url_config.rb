@@ -3,8 +3,7 @@
 module ActiveRecord
   class DatabaseConfigurations
     # A UrlConfig object is created for each database configuration
-    # entry that is created from a URL. This can either be a URL string
-    # or a hash with a URL in place of the config hash.
+    # entry that is created from a URL.
     #
     # A URL config:
     #
