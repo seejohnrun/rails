@@ -165,15 +165,7 @@ module ActiveRecord
       end
 
       def build_db_config_from_hash(env_name, spec_name, config)
-        if config.has_key?(:url)
-          url = config[:url]
-          config_without_url = config.dup
-          config_without_url.delete :url
-
-          ActiveRecord::DatabaseConfigurations::UrlConfig.new(env_name, spec_name, url, config_without_url)
-        else
-          ActiveRecord::DatabaseConfigurations::HashConfig.new(env_name, spec_name, config)
-        end
+        ActiveRecord::DatabaseConfigurations::HashConfig.new(env_name, spec_name, config)
       end
 
       def merge_db_environment_variables(current_env, configs)
