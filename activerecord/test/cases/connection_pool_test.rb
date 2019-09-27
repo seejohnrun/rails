@@ -199,7 +199,7 @@ module ActiveRecord
       def test_idle_timeout_configuration
         @pool.disconnect!
         db_config = ActiveRecord::Base.connection_pool.db_config
-        db_config.configuration_hash.merge!(idle_timeout: "0.02")
+        db_config.idle_timeout = 0.02
         @pool = ConnectionPool.new(db_config)
         idle_conn = @pool.checkout
         @pool.checkin(idle_conn)
@@ -224,7 +224,7 @@ module ActiveRecord
       def test_disable_flush
         @pool.disconnect!
         db_config = ActiveRecord::Base.connection_pool.db_config
-        db_config.configuration_hash.merge!(idle_timeout: -5)
+        db_config.idle_timeout = -5
         @pool = ConnectionPool.new(db_config)
         idle_conn = @pool.checkout
         @pool.checkin(idle_conn)
@@ -721,7 +721,7 @@ module ActiveRecord
           old_config = ActiveRecord::Base.connection_pool.db_config.configuration_hash
           db_config = ActiveRecord::DatabaseConfigurations::HashConfig.new("arunit", "primary", old_config.dup)
 
-          db_config.configuration_hash[:pool] = 1 # this is safe to do, because .dupped ConnectionSpecification also auto-dups its config
+          db_config.pool = 1
 
           yield(pool = ConnectionPool.new(db_config))
         ensure

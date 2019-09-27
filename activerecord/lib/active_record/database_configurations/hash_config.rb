@@ -32,7 +32,10 @@ module ActiveRecord
         @config = config.symbolize_keys
         @connection_hash = @config.except(:adapter, :replica, :migrations_paths, :idle_timeout, :reaping_frequency, :checkout_timeout, :pool)
 
-        @reaping_frequency = @config.fetch(:reaping_frequency, 60)&.to_f
+        @reaping_frequency = @config.fetch(:reaping_frequency, 60)
+        @idle_timeout = @config.fetch(:idle_timeout, 300)
+        @checkout_timeout = @config[:checkout_timeout] || 5
+        @pool = @config[:pool] || 5
       end
 
       def config
@@ -60,19 +63,6 @@ module ActiveRecord
 
       def database
         configuration_hash[:database]
-      end
-
-      def pool
-        (configuration_hash[:pool] || 5).to_i
-      end
-
-      def checkout_timeout
-        (configuration_hash[:checkout_timeout] || 5).to_f
-      end
-
-      def idle_timeout
-        timeout = configuration_hash.fetch(:idle_timeout, 300).to_f
-        timeout if timeout > 0
       end
 
       def adapter

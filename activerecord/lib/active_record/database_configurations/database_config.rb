@@ -13,7 +13,26 @@ module ActiveRecord
         @spec_name = spec_name
       end
 
-      attr_accessor :reaping_frequency
+      attr_writer :idle_timeout, :reaping_frequency, :pool
+
+      def reaping_frequency
+        @reaping_frequency&.to_f
+      end
+
+      def idle_timeout
+        timeout = @idle_timeout&.to_f
+        timeout if timeout && timeout > 0
+      end
+
+      # BYE!
+
+      def checkout_timeout
+        @checkout_timeout&.to_f
+      end
+
+      def pool
+        @pool&.to_i
+      end
 
       def config
         raise NotImplementedError
@@ -28,18 +47,6 @@ module ActiveRecord
       end
 
       def adapter
-        raise NotImplementedError
-      end
-
-      def pool
-        raise NotImplementedError
-      end
-
-      def checkout_timeout
-        raise NotImplementedError
-      end
-
-      def idle_timeout
         raise NotImplementedError
       end
 
