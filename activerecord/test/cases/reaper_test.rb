@@ -69,7 +69,7 @@ module ActiveRecord
 
       def test_reaping_frequency_configuration
         spec = duplicated_spec
-        spec.db_config.configuration_hash[:reaping_frequency] = "10.01"
+        spec.db_config.reaping_frequency = 10.01
 
         pool = ConnectionPool.new(spec.db_config)
 
@@ -80,7 +80,7 @@ module ActiveRecord
 
       def test_connection_pool_starts_reaper
         spec = duplicated_spec
-        spec.db_config.configuration_hash[:reaping_frequency] = "0.0001"
+        spec.db_config.reaping_frequency = 0.0001
 
         pool = ConnectionPool.new(spec.db_config)
 
@@ -98,7 +98,7 @@ module ActiveRecord
 
       def test_reaper_works_after_pool_discard
         spec = duplicated_spec
-        spec.db_config.configuration_hash[:reaping_frequency] = "0.0001"
+        spec.db_config.reaping_frequency = 0.0001
 
         2.times do
           pool = ConnectionPool.new(spec.db_config)
@@ -129,7 +129,7 @@ module ActiveRecord
 
       def test_connection_pool_starts_reaper_in_fork
         spec = duplicated_spec
-        spec.db_config.configuration_hash[:reaping_frequency] = "0.0001"
+        spec.db_config.reaping_frequency = 0.0001
 
         pool = ConnectionPool.new(spec.db_config)
         pool.checkout

@@ -13,6 +13,8 @@ module ActiveRecord
         @spec_name = spec_name
       end
 
+      attr_accessor :reaping_frequency
+
       def config
         raise NotImplementedError
       end
@@ -34,10 +36,6 @@ module ActiveRecord
       end
 
       def checkout_timeout
-        raise NotImplementedError
-      end
-
-      def reaping_frequency
         raise NotImplementedError
       end
 

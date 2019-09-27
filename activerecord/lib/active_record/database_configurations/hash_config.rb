@@ -25,9 +25,14 @@ module ActiveRecord
     #   database adapter, name, and other important information for database
     #   connections.
     class HashConfig < DatabaseConfig
+      attr_reader :connection_hash
+
       def initialize(env_name, spec_name, config)
         super(env_name, spec_name)
         @config = config.symbolize_keys
+        @connection_hash = @config.except(:adapter, :replica, :migrations_paths, :idle_timeout, :reaping_frequency, :checkout_timeout, :pool)
+
+        @reaping_frequency = @config.fetch(:reaping_frequency, 60)&.to_f
       end
 
       def config
@@ -63,12 +68,6 @@ module ActiveRecord
 
       def checkout_timeout
         (configuration_hash[:checkout_timeout] || 5).to_f
-      end
-
-      # +reaping_frequency+ is configurable mostly for historical reasons, but it could
-      # also be useful if someone wants a very low +idle_timeout+.
-      def reaping_frequency
-        configuration_hash.fetch(:reaping_frequency, 60)&.to_f
       end
 
       def idle_timeout
