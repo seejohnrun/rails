@@ -13,11 +13,11 @@ module ActiveRecord
 
       def initialize(db_config)
         @db_config = db_config
-        @configuration_hash = db_config.configuration_hash
+        @connection_hash = db_config.connection_hash
       end
 
       def create
-        establish_connection(configuration_hash_without_database)
+        establish_connection(connection_hash_without_database)
         connection.create_database(db_config.database, creation_options)
         establish_connection(db_config)
       end
@@ -68,16 +68,16 @@ module ActiveRecord
       end
 
       private
-        attr_reader :db_config, :configuration_hash
+        attr_reader :db_config, :connection_hash
 
-        def configuration_hash_without_database
-          configuration_hash.merge(database: nil)
+        def connection_hash_without_database
+          connection_hash.merge(database: nil)
         end
 
         def creation_options
           Hash.new.tap do |options|
-            options[:charset]     = configuration_hash[:encoding]   if configuration_hash.include?(:encoding)
-            options[:collation]   = configuration_hash[:collation]  if configuration_hash.include?(:collation)
+            options[:charset]     = connection_hash[:encoding]   if connection_hash.include?(:encoding)
+            options[:collation]   = connection_hash[:collation]  if connection_hash.include?(:collation)
           end
         end
 
@@ -94,7 +94,7 @@ module ActiveRecord
             sslcapath: "--ssl-capath",
             sslcipher: "--ssl-cipher",
             sslkey:    "--ssl-key"
-          }.map { |opt, arg| "#{arg}=#{configuration_hash[opt]}" if configuration_hash[opt] }.compact
+          }.map { |opt, arg| "#{arg}=#{connection_hash[opt]}" if connection_hash[opt] }.compact
 
           args
         end

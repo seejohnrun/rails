@@ -31,7 +31,7 @@ if current_adapter?(:Mysql2Adapter)
             ActiveRecord::Base,
             :establish_connection,
             [
-              [adapter: "mysql2", database: nil],
+              [database: nil],
               [db_config]
             ]
           ) do
@@ -76,7 +76,7 @@ if current_adapter?(:Mysql2Adapter)
             ActiveRecord::Base,
             :establish_connection,
             [
-              [adapter: "mysql2", database: nil],
+              [database: nil],
               [db_config]
             ]
           ) do
