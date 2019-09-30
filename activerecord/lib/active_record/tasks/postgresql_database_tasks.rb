@@ -18,12 +18,12 @@ module ActiveRecord
 
       def initialize(db_config)
         @db_config = db_config
-        @configuration_hash = db_config.configuration_hash
+        @connection_hash = db_config.connection_hash
       end
 
       def create(master_established = false)
         establish_master_connection unless master_established
-        connection.create_database(db_config.database, configuration_hash.merge(encoding: encoding))
+        connection.create_database(db_config.database, connection_hash.merge(encoding: encoding))
         establish_connection(db_config)
       end
 
@@ -52,7 +52,7 @@ module ActiveRecord
         search_path = \
           case ActiveRecord::Base.dump_schemas
           when :schema_search_path
-            configuration_hash[:schema_search_path]
+            connection_hash[:schema_search_path]
           when :all
             nil
           when String
@@ -87,24 +87,24 @@ module ActiveRecord
       end
 
       private
-        attr_reader :db_config, :configuration_hash
+        attr_reader :db_config, :connection_hash
 
         def encoding
-          configuration_hash[:encoding] || DEFAULT_ENCODING
+          connection_hash[:encoding] || DEFAULT_ENCODING
         end
 
         def establish_master_connection
-          establish_connection configuration_hash.merge(
+          establish_connection connection_hash.merge(
             database: "postgres",
             schema_search_path: "public"
           )
         end
 
         def set_psql_env
-          ENV["PGHOST"]     = configuration_hash[:host]          if configuration_hash[:host]
-          ENV["PGPORT"]     = configuration_hash[:port].to_s     if configuration_hash[:port]
-          ENV["PGPASSWORD"] = configuration_hash[:password].to_s if configuration_hash[:password]
-          ENV["PGUSER"]     = configuration_hash[:username].to_s if configuration_hash[:username]
+          ENV["PGHOST"]     = connection_hash[:host]          if connection_hash[:host]
+          ENV["PGPORT"]     = connection_hash[:port].to_s     if connection_hash[:port]
+          ENV["PGPASSWORD"] = connection_hash[:password].to_s if connection_hash[:password]
+          ENV["PGUSER"]     = connection_hash[:username].to_s if connection_hash[:username]
         end
 
         def run_cmd(cmd, args, action)
