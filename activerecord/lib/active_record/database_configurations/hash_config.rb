@@ -62,7 +62,7 @@ module ActiveRecord
       end
 
       def database
-        configuration_hash[:database]
+        connection_hash[:database]
       end
 
       def adapter

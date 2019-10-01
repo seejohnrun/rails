@@ -477,7 +477,7 @@ module ActiveRecord
           klass = class_for_adapter(db_config.adapter)
           converted = klass.respond_to?(:using_database_configurations?) && klass.using_database_configurations?
 
-          config = converted ? db_config : db_config.configuration_hash
+          config = converted ? db_config : db_config.connection_hash
           klass.new(config, *arguments)
         end
 
@@ -515,7 +515,7 @@ module ActiveRecord
         end
 
         def local_database?(db_config)
-          host = db_config.configuration_hash[:host]
+          host = db_config.connection_hash[:host]
           host.blank? || LOCAL_HOSTS.include?(host)
         end
 
