@@ -59,7 +59,7 @@ if current_adapter?(:SQLite3Adapter)
           ActiveRecord::Tasks::DatabaseTasks.create @configuration, "/rails/root"
         end
 
-        assert_equal [@configuration.symbolize_keys], calls.map { |c| c.first.configuration_hash }
+        assert_equal [@configuration.symbolize_keys.except(:adapter)], calls.map { |c| c.first.connection_hash }
       end
 
       def test_db_create_with_error_prints_message
