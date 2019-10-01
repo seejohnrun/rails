@@ -25,7 +25,7 @@ module ActiveRecord
       def resolve_spec(spec, config)
         configs = ActiveRecord::DatabaseConfigurations.new(config)
         resolver = ConnectionAdapters::Resolver.new(configs)
-        resolver.resolve(spec, spec).configuration_hash
+        resolver.resolve(spec, spec)
       end
 
       def test_invalid_string_config
@@ -46,10 +46,11 @@ module ActiveRecord
 
       def test_resolver_with_database_uri_and_current_env_symbol_key
         ENV["DATABASE_URL"] = "postgres://localhost/foo"
-        config   = { "not_production" => {  "adapter" => "not_postgres", "database" => "not_foo" } }
-        actual   = resolve_spec(:default_env, config)
-        expected = { adapter: "postgresql", database: "foo", host: "localhost", name: "default_env" }
-        assert_equal expected, actual
+        config = { "not_production" => {  "adapter" => "not_postgres", "database" => "not_foo" } }
+        db_config = resolve_spec(:default_env, config)
+
+        assert_equal({database: "foo", host: "localhost"}, db_config.connection_hash)
+        assert_equal("default_env", db_config.name)
       end
 
       def test_resolver_with_database_uri_and_current_env_symbol_key_and_rails_env
