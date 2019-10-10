@@ -1,10 +1,27 @@
 # frozen_string_literal: true
 
 require "cases/helper"
+require "byebug"
+require "objspace"
 
 module ActiveRecord
   class DatabaseConfigurations
     class HashConfigTest < ActiveRecord::TestCase
+      def test_gc
+        db_config = ActiveRecord::DatabaseConfigurations::HashConfig.new("defaultenv", "primary", {})
+
+        # pool_ref = WeakRef.new(db_config.connection_pool)
+        pool_ref = WeakRef.new(ActiveRecord::ConnectionAdapters::PoolManager.instance.pool_for(db_config))
+        assert_predicate pool_ref, :weakref_alive?
+
+        # ActiveRecord::DatabaseConfigurations::DatabaseConfig.discard_pools!
+        GC.stress = true
+        ActiveRecord::ConnectionAdapters::PoolManager.instance.discard_pools!
+        GC.stress = false
+
+        assert_not_predicate pool_ref, :weakref_alive?
+      end
+
       def test_pool_default_when_nil
         config = HashConfig.new("default_env", "primary", pool: nil)
         assert_equal 5, config.pool

@@ -1154,7 +1154,7 @@ module ActiveRecord
       end
 
       def discard_pools!
-        @config_to_pool.each_key do |db_config|
+        config_to_pool.each_key do |db_config|
           discard_pool_for(db_config)
         end
       end
@@ -1173,7 +1173,7 @@ module ActiveRecord
         return unless config_to_pool.key?(db_config)
 
         synchronize do
-          pool = config_to_pool[db_config]
+          return unless pool = config_to_pool[db_config]
           pool.automatic_reconnect = false
           pool.disconnect!
         end
@@ -1185,8 +1185,9 @@ module ActiveRecord
         return unless config_to_pool.key?(db_config)
 
         synchronize do
-          pool = config_to_pool.delete(db_config)
+          return unless pool = config_to_pool[db_config]
           pool.discard!
+          config_to_pool.delete(db_config)
         end
       end
     end
