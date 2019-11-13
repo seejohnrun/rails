@@ -17,10 +17,6 @@ module ActiveRecord
         raise NotImplementedError
       end
 
-      def adapter_method
-        "#{adapter}_connection"
-      end
-
       def database
         raise NotImplementedError
       end
