@@ -63,6 +63,7 @@ module ActiveRecord
     #
     #   { database: "my_db", adapter: "mysql2" }
     def default_hash(env = default_env)
+      raise 'f off'
       default = find_db_config(env)
       default.configuration_hash if default
     end
