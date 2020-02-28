@@ -209,7 +209,7 @@ module Rails
       def paths
         @paths ||= begin
           paths = super
-          paths.add "config/database",    with: "config/database.yml"
+          paths.add "config/database",    with: "config", glob: "database.{yml,rb}"
           paths.add "config/secrets",     with: "config", glob: "secrets.yml{,.enc}"
           paths.add "config/environment", with: "config/environment.rb"
           paths.add "lib/templates"
@@ -245,17 +245,21 @@ module Rails
       # Loads and returns the entire raw configuration of database from
       # values stored in <tt>config/database.yml</tt>.
       def database_configuration
+        # config option
         path = paths["config/database"].existent.first
-        yaml = Pathname.new(path) if path
+        p PATH: path
+        pathname = Pathname.new(path) if path
 
-        config = if yaml&.exist?
-          loaded_yaml = ActiveSupport::ConfigurationFile.parse(yaml)
+        config = if pathname&.exist? && path.end_with?('.yml')
+          loaded_yaml = ActiveSupport::ConfigurationFile.parse(pathname)
           if (shared = loaded_yaml.delete("shared"))
             loaded_yaml.each do |_k, values|
               values.reverse_merge!(shared)
             end
           end
           Hash.new(shared).merge(loaded_yaml)
+        elsif pathname&.exist? && path.end_with?('.rb')
+          require(path)
         elsif ENV["DATABASE_URL"]
           # Value from ENV['DATABASE_URL'] is set to default database connection
           # by Active Record.
