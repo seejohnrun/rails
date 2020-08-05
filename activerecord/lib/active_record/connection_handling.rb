@@ -49,7 +49,7 @@ module ActiveRecord
     def establish_connection(config_or_env = nil)
       config_or_env ||= DEFAULT_ENV.call.to_sym
       db_config, owner_name = resolve_config_for_connection(config_or_env)
-      connection_handler.establish_connection(db_config, current_pool_key, owner_name)
+      connection_handler.establish_connection(db_config, current_pool_key, owner_name, current_role_key)
     end
 
     # Connects a model to the databases specified. The +database+ keyword
@@ -247,16 +247,16 @@ module ActiveRecord
     end
 
     def connection_pool
-      connection_handler.retrieve_connection_pool(connection_specification_name, current_pool_key) || raise(ConnectionNotEstablished)
+      connection_handler.retrieve_connection_pool(connection_specification_name, current_pool_key, current_role_key) || raise(ConnectionNotEstablished)
     end
 
     def retrieve_connection
-      connection_handler.retrieve_connection(connection_specification_name, current_pool_key)
+      connection_handler.retrieve_connection(connection_specification_name, current_pool_key, current_role_key)
     end
 
     # Returns +true+ if Active Record is connected.
     def connected?
-      connection_handler.connected?(connection_specification_name, current_pool_key)
+      connection_handler.connected?(connection_specification_name, current_pool_key, current_role_key)
     end
 
     def remove_connection(name = nil)
@@ -264,11 +264,11 @@ module ActiveRecord
       # if removing a connection that has a pool, we reset the
       # connection_specification_name so it will use the parent
       # pool.
-      if connection_handler.retrieve_connection_pool(name, current_pool_key)
+      if connection_handler.retrieve_connection_pool(name, current_pool_key, current_role_key)
         self.connection_specification_name = nil
       end
 
-      connection_handler.remove_connection_pool(name, current_pool_key)
+      connection_handler.remove_connection_pool(name, current_pool_key, current_role_key)
     end
 
     def clear_cache! # :nodoc:
