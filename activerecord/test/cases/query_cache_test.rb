@@ -79,30 +79,20 @@ class QueryCacheTest < ActiveRecord::TestCase
       db_config = ActiveRecord::Base.configurations.configs_for(env_name: "arunit", name: "primary")
       ActiveRecord::Base.establish_connection(db_config)
     end
-    rw_conn = ActiveRecord::Base.connection
 
     mw = middleware { |env|
-      pool_configs = ActiveRecord::Base.connection_handler.connection_pool_list
-      p pool_configs.first
+      pool_configs = ActiveRecord::Base.connection_handler.connection_pool_list_for_role(role: :reading)
       ro_conn = pool_configs.first.connection
-      assert_not_equal rw_conn, ro_conn
       assert_predicate ActiveRecord::Base.connection, :query_cache_enabled
       assert_predicate ro_conn, :query_cache_enabled
     }
 
     mw.call({})
-  ensure
-    ActiveRecord::Base.connection_handlers = { writing: ActiveRecord::Base.default_connection_handler }
   end
 
 
   if Process.respond_to?(:fork) && !in_memory_db?
     def test_query_cache_with_multiple_handlers_and_forked_processes
-      ActiveRecord::Base.connection_handlers = {
-        writing: ActiveRecord::Base.default_connection_handler,
-        reading: ActiveRecord::ConnectionAdapters::ConnectionHandler.new
-      }
-
       ActiveRecord::Base.connected_to(role: :reading) do
         db_config = ActiveRecord::Base.configurations.configs_for(env_name: "arunit", name: "primary")
         ActiveRecord::Base.establish_connection(db_config)
@@ -155,8 +145,6 @@ class QueryCacheTest < ActiveRecord::TestCase
       end
 
       rd.close
-    ensure
-      ActiveRecord::Base.connection_handlers = { writing: ActiveRecord::Base.default_connection_handler }
     end
   end
 
@@ -583,11 +571,6 @@ class QueryCacheTest < ActiveRecord::TestCase
   def test_clear_query_cache_is_called_on_all_connections
     skip "with in memory db, reading role won't be able to see database on writing role" if in_memory_db?
     with_temporary_connection_pool do
-      ActiveRecord::Base.connection_handlers = {
-        writing: ActiveRecord::Base.default_connection_handler,
-        reading: ActiveRecord::ConnectionAdapters::ConnectionHandler.new
-      }
-
       ActiveRecord::Base.connected_to(role: :reading) do
         db_config = ActiveRecord::Base.configurations.configs_for(env_name: "arunit", name: "primary")
         ActiveRecord::Base.establish_connection(db_config)
@@ -615,8 +598,6 @@ class QueryCacheTest < ActiveRecord::TestCase
 
       mw.call({})
     end
-  ensure
-    ActiveRecord::Base.connection_handlers = { writing: ActiveRecord::Base.default_connection_handler }
   end
 
   test "query cache is enabled in threads with shared connection" do

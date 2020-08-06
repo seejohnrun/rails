@@ -11,8 +11,12 @@ module ActiveRecord
         @name_to_role_mapping.keys
       end
 
-      def pool_configs
-        @name_to_role_mapping.flat_map { |_role, shard_map| shard_map.values.compact }
+      def pool_configs(role = nil)
+        if role
+          @name_to_role_mapping[role].values
+        else
+          @name_to_role_mapping.flat_map { |_, shard_map| shard_map.values }
+        end
       end
 
       def remove_pool_config(role, shard)

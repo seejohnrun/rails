@@ -11,10 +11,6 @@ module ActiveRecord
       @session = ActiveRecord::Middleware::DatabaseSelector::Resolver::Session.new(@session_store)
     end
 
-    teardown do
-      ActiveRecord::Base.connection_handlers = { writing: ActiveRecord::Base.default_connection_handler }
-    end
-
     def test_empty_session
       assert_equal Time.at(0), @session.last_write_timestamp
     end
