@@ -135,7 +135,7 @@ module ActiveRecord
 
       class_attribute :default_connection_handler, instance_writer: false
 
-      class_attribute :default_pool_key, instance_writer: false
+      class_attribute :default_shard_key, instance_writer: false
 
       class_attribute :default_role_key, instance_writer: false
 
@@ -149,12 +149,12 @@ module ActiveRecord
         Thread.current.thread_variable_set(:ar_connection_handler, handler)
       end
 
-      def self.current_pool_key
-        Thread.current.thread_variable_get(:ar_pool_key) || default_pool_key
+      def self.current_shard_key
+        Thread.current.thread_variable_get(:ar_shard_key) || default_shard_key
       end
 
-      def self.current_pool_key=(pool_key)
-        Thread.current.thread_variable_set(:ar_pool_key, pool_key)
+      def self.current_shard_key=(shard_key)
+        Thread.current.thread_variable_set(:ar_shard_key, shard_key)
       end
 
       def self.current_role_key
@@ -166,7 +166,7 @@ module ActiveRecord
       end
 
       self.default_connection_handler = ConnectionAdapters::ConnectionHandler.new
-      self.default_pool_key = :default
+      self.default_shard_key = :default
       self.default_role_key = :writing
     end
 
