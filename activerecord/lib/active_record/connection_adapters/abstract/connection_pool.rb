@@ -1026,9 +1026,8 @@ module ActiveRecord
         owner_to_pool_manager.keys
       end
 
-      def connection_pool_list
+      def connection_pool_list(role: Base.current_role_key, shard: Base.current_shard_key)
         owner_to_pool_manager.values.compact.flat_map do |m|
-          p [m, m.pool_configs] if m.pool_configs.first.nil?
           m.pool_configs.map(&:pool)
         end
       end

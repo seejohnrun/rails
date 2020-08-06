@@ -75,18 +75,17 @@ class QueryCacheTest < ActiveRecord::TestCase
   end
 
   def test_query_cache_is_applied_to_connections_in_all_handlers
-    ActiveRecord::Base.connection_handlers = {
-      writing: ActiveRecord::Base.default_connection_handler,
-      reading: ActiveRecord::ConnectionAdapters::ConnectionHandler.new
-    }
-
     ActiveRecord::Base.connected_to(role: :reading) do
       db_config = ActiveRecord::Base.configurations.configs_for(env_name: "arunit", name: "primary")
       ActiveRecord::Base.establish_connection(db_config)
     end
+    rw_conn = ActiveRecord::Base.connection
 
     mw = middleware { |env|
-      ro_conn = ActiveRecord::Base.connection_handlers[:reading].connection_pool_list.first.connection
+      pool_configs = ActiveRecord::Base.connection_handler.connection_pool_list
+      p pool_configs.first
+      ro_conn = pool_configs.first.connection
+      assert_not_equal rw_conn, ro_conn
       assert_predicate ActiveRecord::Base.connection, :query_cache_enabled
       assert_predicate ro_conn, :query_cache_enabled
     }
