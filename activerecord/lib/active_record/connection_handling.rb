@@ -87,17 +87,15 @@ module ActiveRecord
 
       database.each do |role, database_key|
         db_config, owner_name = resolve_config_for_connection(database_key)
-        handler = lookup_connection_handler(role.to_sym)
 
-        connections << handler.establish_connection(db_config, owner: owner_name, role: role, shard: default_shard_key)
+        connections << connection_handler.establish_connection(db_config, owner: owner_name, role: role.to_sym, shard: default_shard_key)
       end
 
       shards.each do |shard_key, database_keys|
         database_keys.each do |role, database_key|
           db_config, owner_name = resolve_config_for_connection(database_key)
-          handler = lookup_connection_handler(role.to_sym)
 
-          connections << handler.establish_connection(db_config, owner: owner_name, role: role, shard: shard_key.to_sym)
+          connections << connection_handler.establish_connection(db_config, owner: owner_name, role: role.to_sym, shard: shard_key.to_sym)
         end
       end
 
@@ -152,15 +150,12 @@ module ActiveRecord
         end
 
         db_config, owner_name = resolve_config_for_connection(database)
-        handler = lookup_connection_handler(role)
 
-        handler.establish_connection(db_config, default_shard_key, owner_name)
+        connection_handler.establish_connection(db_config, owner: owner_name, role: role)
 
-        with_handler(role, &blk)
-      elsif shard
-        with_shard(shard, role || current_role, prevent_writes, &blk)
-      elsif role
-        with_role(role, prevent_writes, &blk)
+        with_shard(current_shard_key, role, prevent_writes, &blk)
+      elsif shard || role
+        with_shard(shard || current_shard_key, role || current_role, prevent_writes, &blk)
       else
         raise ArgumentError, "must provide a `shard` and/or `role`."
       end
@@ -173,7 +168,7 @@ module ActiveRecord
     #     ActiveRecord::Base.connected_to?(role: :reading) #=> false
     #   end
     def connected_to?(role:, shard: ActiveRecord::Base.default_shard_key)
-      current_role == role.to_sym && current_shard_key == shard.to_sym
+      current_role_key == role.to_sym && current_shard_key == shard.to_sym
     end
 
     # Returns the symbol representing the current connected role.
@@ -186,7 +181,7 @@ module ActiveRecord
     #     ActiveRecord::Base.current_role #=> :reading
     #   end
     def current_role
-      connection_handlers.key(connection_handler)
+      current_role_key
     end
 
     def lookup_connection_handler(handler_key) # :nodoc:
@@ -294,23 +289,20 @@ module ActiveRecord
         swap_connection_handler(handler, &blk)
       end
 
-      def with_role(role, prevent_writes, &blk)
-        prevent_writes = true if role == reading_role
-
-        with_handler(role.to_sym) do
-          connection_handler.while_preventing_writes(prevent_writes, &blk)
-        end
-      end
-
       def with_shard(shard_key, role, prevent_writes)
         old_shard_key = current_shard_key
+        old_role = current_role_key
 
-        with_role(role, prevent_writes) do
+        prevent_writes = true if role == reading_role
+
+        connection_handler.while_preventing_writes(prevent_writes) do
           self.current_shard_key = shard_key
+          self.current_role_key = role
           yield
         end
       ensure
         self.current_shard_key = old_shard_key
+        self.current_role_key = old_role
       end
 
       def swap_connection_handler(handler, &blk) # :nodoc:

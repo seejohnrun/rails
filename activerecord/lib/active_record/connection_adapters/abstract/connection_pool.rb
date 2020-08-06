@@ -1027,7 +1027,10 @@ module ActiveRecord
       end
 
       def connection_pool_list
-        owner_to_pool_manager.values.compact.flat_map { |m| m.pool_configs.map(&:pool) }
+        owner_to_pool_manager.values.compact.flat_map do |m|
+          p [m, m.pool_configs] if m.pool_configs.first.nil?
+          m.pool_configs.map(&:pool)
+        end
       end
       alias :connection_pools :connection_pool_list
 
@@ -1052,7 +1055,7 @@ module ActiveRecord
 
         owner_to_pool_manager[pool_config.connection_specification_name] ||= PoolManager.new
         pool_manager = get_pool_manager(pool_config.connection_specification_name)
-        pool_manager.set_pool_config(shard, pool_config)
+        pool_manager.set_pool_config(role, shard, pool_config)
 
         message_bus.instrument("!connection.active_record", payload) do
           pool_config.pool
@@ -1130,7 +1133,7 @@ module ActiveRecord
 
       def remove_connection_pool(owner, role: Base.default_role_key, shard: Base.default_shard_key)
         if pool_manager = get_pool_manager(owner)
-          pool_config = pool_manager.remove_pool_config(shard)
+          pool_config = pool_manager.remove_pool_config(role, shard)
 
           if pool_config
             pool_config.disconnect!
@@ -1143,7 +1146,7 @@ module ActiveRecord
       # This makes retrieving the connection pool O(1) once the process is warm.
       # When a connection is established or removed, we invalidate the cache.
       def retrieve_connection_pool(owner, role: Base.default_role_key, shard: Base.default_shard_key)
-        pool_config = get_pool_manager(owner)&.get_pool_config(shard)
+        pool_config = get_pool_manager(owner)&.get_pool_config(role, shard)
         pool_config&.pool
       end
 
