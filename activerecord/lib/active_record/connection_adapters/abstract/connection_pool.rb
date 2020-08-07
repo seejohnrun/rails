@@ -1033,7 +1033,7 @@ module ActiveRecord
       end
       alias :connection_pools :connection_pool_list
 
-      def connection_pool_list_for_role(role: Base.current_role_key)
+      def connection_pool_list_for_role(role)
         owner_to_pool_manager.values.compact.flat_map do |m|
           m.pool_configs(role).map(&:pool)
         end
@@ -1111,6 +1111,8 @@ module ActiveRecord
             message = "No connection pool for '#{spec_name}' found for the '#{shard}' shard."
           elsif ActiveRecord::Base.connection_handler != ActiveRecord::Base.default_connection_handler
             message = "No connection pool for '#{spec_name}' found for the '#{ActiveRecord::Base.current_role}' role."
+          elsif role != ActiveRecord::Base.default_role_key
+            message = "No connection pool for '#{spec_name}' found for the '#{role}' role."
           else
             message = "No connection pool for '#{spec_name}' found."
           end

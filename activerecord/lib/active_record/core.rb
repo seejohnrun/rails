@@ -125,8 +125,6 @@ module ActiveRecord
 
       class_attribute :strict_loading_by_default, instance_accessor: false, default: false
 
-      mattr_accessor :connection_handlers, instance_accessor: false, default: {}
-
       mattr_accessor :writing_role, instance_accessor: false, default: :writing
 
       mattr_accessor :reading_role, instance_accessor: false, default: :reading

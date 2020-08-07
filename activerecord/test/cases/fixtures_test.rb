@@ -1399,13 +1399,11 @@ if current_adapter?(:SQLite3Adapter) && !in_memory_db?
 
     def setup
       @old_handler = ActiveRecord::Base.connection_handler
-      @old_handlers = ActiveRecord::Base.connection_handlers
       @prev_configs, ActiveRecord::Base.configurations = ActiveRecord::Base.configurations, config
       db_config = ActiveRecord::DatabaseConfigurations::HashConfig.new(ENV["RAILS_ENV"], "readonly", readonly_config)
 
       handler = ActiveRecord::ConnectionAdapters::ConnectionHandler.new
       handler.establish_connection(db_config)
-      ActiveRecord::Base.connection_handlers = {}
       ActiveRecord::Base.connection_handler = handler
       ActiveRecord::Base.connects_to(database: { writing: :default, reading: :readonly })
     end
@@ -1413,7 +1411,6 @@ if current_adapter?(:SQLite3Adapter) && !in_memory_db?
     def teardown
       ActiveRecord::Base.configurations = @prev_configs
       ActiveRecord::Base.connection_handler = @old_handler
-      ActiveRecord::Base.connection_handlers = @old_handlers
     end
 
     def test_uses_writing_connection_for_fixtures
@@ -1424,13 +1421,6 @@ if current_adapter?(:SQLite3Adapter) && !in_memory_db?
           ActiveRecord::Base.connected_to(role: :writing) { Dog.create! alias: "Doggo" }
         end
       end
-    end
-
-    def test_writing_and_reading_connections_are_the_same
-      rw_conn = ActiveRecord::Base.connection_handlers[:writing].connection_pool_list.first.connection
-      ro_conn = ActiveRecord::Base.connection_handlers[:reading].connection_pool_list.first.connection
-
-      assert_equal rw_conn, ro_conn
     end
 
     private

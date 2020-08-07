@@ -43,17 +43,14 @@ class TestFixturesTest < ActiveRecord::TestCase
         end
       end
 
-      old_handlers = ActiveRecord::Base.connection_handlers
       old_handler = ActiveRecord::Base.connection_handler
       ActiveRecord::Base.connection_handler = ActiveRecord::ConnectionAdapters::ConnectionHandler.new
-      ActiveRecord::Base.connection_handlers = {}
       ActiveRecord::Base.establish_connection(:arunit)
 
       test_result = klass.new("test_run_successfuly").run
       assert_predicate(test_result, :passed?)
     ensure
       ActiveRecord::Base.connection_handler = old_handler
-      ActiveRecord::Base.connection_handlers = old_handlers
       FileUtils.rm_r(tmp_dir)
     end
   end
