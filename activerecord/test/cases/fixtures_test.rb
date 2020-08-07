@@ -1411,6 +1411,7 @@ if current_adapter?(:SQLite3Adapter) && !in_memory_db?
     def teardown
       ActiveRecord::Base.configurations = @prev_configs
       ActiveRecord::Base.connection_handler = @old_handler
+      clean_up_connection_handler
     end
 
     def test_uses_writing_connection_for_fixtures

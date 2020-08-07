@@ -373,6 +373,8 @@ module ActiveRecord
         end
 
         assert_equal reading, reading_handler
+      ensure
+        clean_up_connection_handler
       end
 
       def test_calling_connected_to_on_a_non_existent_handler_raises

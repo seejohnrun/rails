@@ -17,6 +17,10 @@ module ActiveRecord
         @ro_pool = ActiveRecord::Base.connection_handler.establish_connection(db_config, role: :reading)
       end
 
+      def teardown
+        clean_up_connection_handler
+      end
+
       unless in_memory_db?
         def test_establish_connection_using_3_levels_config
           previous_env, ENV["RAILS_ENV"] = ENV["RAILS_ENV"], "default_env"

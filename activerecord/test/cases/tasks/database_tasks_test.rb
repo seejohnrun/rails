@@ -1112,6 +1112,7 @@ module ActiveRecord
       def teardown
         SchemaMigration.delete_all
         InternalMetadata.delete_all
+        clean_up_connection_handler
       end
 
       def test_truncate_tables
