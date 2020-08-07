@@ -51,6 +51,7 @@ class TestFixturesTest < ActiveRecord::TestCase
       assert_predicate(test_result, :passed?)
     ensure
       ActiveRecord::Base.connection_handler = old_handler
+      clean_up_connection_handler
       FileUtils.rm_r(tmp_dir)
     end
   end

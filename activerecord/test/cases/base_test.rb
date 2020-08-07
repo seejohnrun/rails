@@ -1609,6 +1609,8 @@ class BasicsTest < ActiveRecord::TestCase
     end
 
     assert_match %r/\AWrite query attempted while in readonly mode: INSERT /, error.message
+  ensure
+    clean_up_connection_handler
   end
 
   test "updating a record raises if preventing writes" do

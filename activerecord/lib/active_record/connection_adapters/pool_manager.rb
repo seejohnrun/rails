@@ -19,6 +19,10 @@ module ActiveRecord
         end
       end
 
+      def remove_role(role)
+        @name_to_role_mapping.delete(role)
+      end
+
       def remove_pool_config(role, shard)
         @name_to_role_mapping[role].delete(shard)
       end

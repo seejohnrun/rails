@@ -14,6 +14,10 @@ module ActiveRecord
         @writing_handler = ConnectionHandler.new
       end
 
+      def teardown
+        clean_up_connection_handler
+      end
+
       unless in_memory_db?
         def test_establish_connection_with_pool_configs
           previous_env, ENV["RAILS_ENV"] = ENV["RAILS_ENV"], "default_env"

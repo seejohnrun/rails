@@ -353,6 +353,8 @@ module ActiveRecord
 
         assert_not_equal reading, ActiveRecord::Base.connection_handler
         assert_equal reading, reading_handler
+      ensure
+        clean_up_connection_handler
       end
 
       def test_connection_handlers_swapping_connections_in_fiber

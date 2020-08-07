@@ -149,6 +149,16 @@ def disable_extension!(extension, connection)
   connection.reconnect!
 end
 
+def clean_up_connection_handler
+  handler = ActiveRecord::Base.connection_handler
+  handler.instance_variable_get(:@owner_to_pool_manager).each do |owner, pool_manager|
+    pool_manager.role_names.each do |role_name|
+      next if role_name == ActiveRecord::Base.default_role_key
+      pool_manager.remove_role(role_name)
+    end
+  end
+end
+
 def load_schema
   # silence verbose schema loading
   original_stdout = $stdout

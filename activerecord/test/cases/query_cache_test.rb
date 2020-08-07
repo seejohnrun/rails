@@ -75,9 +75,6 @@ class QueryCacheTest < ActiveRecord::TestCase
   end
 
   def test_query_cache_is_applied_to_connections_in_all_handlers
-    p "*" * 80
-      pp ActiveRecord::Base.connection_handler.connection_pool_list.size => ActiveRecord::Base.connection_handler.connection_pool_list.map { |x| [x.connection.__id__, x.pool_config.connection_specification_name, x.db_config] }
-    p "*" * 80
     ActiveRecord::Base.connected_to(role: :reading) do
       db_config = ActiveRecord::Base.configurations.configs_for(env_name: "arunit", name: "primary")
       ActiveRecord::Base.establish_connection(db_config)
@@ -92,15 +89,12 @@ class QueryCacheTest < ActiveRecord::TestCase
 
     mw.call({})
   ensure
-    p "*" * 80
-      pp ActiveRecord::Base.connection_handler.connection_pool_list.size => ActiveRecord::Base.connection_handler.connection_pool_list.map { |x| [x.connection.__id__, x.pool_config.connection_specification_name, x.db_config] }
-    p "*" * 80
+    clean_up_connection_handler
   end
 
 
   if Process.respond_to?(:fork) && !in_memory_db?
     def test_query_cache_with_multiple_handlers_and_forked_processes
-      skip "for now"
       ActiveRecord::Base.connected_to(role: :reading) do
         db_config = ActiveRecord::Base.configurations.configs_for(env_name: "arunit", name: "primary")
         ActiveRecord::Base.establish_connection(db_config)
@@ -153,6 +147,8 @@ class QueryCacheTest < ActiveRecord::TestCase
       end
 
       rd.close
+    ensure
+      clean_up_connection_handler
     end
   end
 
@@ -439,7 +435,6 @@ class QueryCacheTest < ActiveRecord::TestCase
   end
 
   def test_cache_is_available_when_using_a_not_connected_connection
-    skip "for now"
     skip "In-Memory DB can't test for using a not connected connection" if in_memory_db?
     db_config = ActiveRecord::Base.configurations.configs_for(env_name: "arunit", name: "primary").dup
     db_config.owner_name = "test2"
@@ -570,7 +565,6 @@ class QueryCacheTest < ActiveRecord::TestCase
   end
 
   def test_clear_query_cache_is_called_on_all_connections
-    skip "for now"
     skip "with in memory db, reading role won't be able to see database on writing role" if in_memory_db?
     ActiveRecord::Base.connected_to(role: :reading) do
       db_config = ActiveRecord::Base.configurations.configs_for(env_name: "arunit", name: "primary")
@@ -598,6 +592,8 @@ class QueryCacheTest < ActiveRecord::TestCase
     }
 
     mw.call({})
+  ensure
+    clean_up_connection_handler
   end
 
   test "query cache is enabled in threads with shared connection" do
@@ -726,7 +722,6 @@ class QueryCacheExpiryTest < ActiveRecord::TestCase
   end
 
   def test_insert_all_bang
-    pp ActiveRecord::Base.connection_handler.connection_pool_list.size => ActiveRecord::Base.connection_handler.connection_pool_list.map { |x| [x.connection.__id__, x.pool_config.connection_specification_name, x.db_config] }
     assert_called(ActiveRecord::Base.connection, :clear_query_cache, times: 2) do
       Task.cache { Task.insert!({ starting: Time.now }) }
     end
