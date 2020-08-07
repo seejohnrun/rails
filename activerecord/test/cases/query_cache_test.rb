@@ -75,6 +75,9 @@ class QueryCacheTest < ActiveRecord::TestCase
   end
 
   def test_query_cache_is_applied_to_connections_in_all_handlers
+    p "*" * 80
+      pp ActiveRecord::Base.connection_handler.connection_pool_list.size => ActiveRecord::Base.connection_handler.connection_pool_list.map { |x| [x.connection.__id__, x.pool_config.connection_specification_name, x.db_config] }
+    p "*" * 80
     ActiveRecord::Base.connected_to(role: :reading) do
       db_config = ActiveRecord::Base.configurations.configs_for(env_name: "arunit", name: "primary")
       ActiveRecord::Base.establish_connection(db_config)
@@ -723,9 +726,7 @@ class QueryCacheExpiryTest < ActiveRecord::TestCase
   end
 
   def test_insert_all_bang
-    if ActiveRecord::Base.connection_handler.connection_pool_list.size > 2
-      pp ActiveRecord::Base.connection_handler.connection_pool_list.size => ActiveRecord::Base.connection_handler.connection_pool_list.map { |x| [x.connection.__id__, x.pool_config.connection_specification_name, x.db_config] }
-    end
+    pp ActiveRecord::Base.connection_handler.connection_pool_list.size => ActiveRecord::Base.connection_handler.connection_pool_list.map { |x| [x.connection.__id__, x.pool_config.connection_specification_name, x.db_config] }
     assert_called(ActiveRecord::Base.connection, :clear_query_cache, times: 2) do
       Task.cache { Task.insert!({ starting: Time.now }) }
     end
