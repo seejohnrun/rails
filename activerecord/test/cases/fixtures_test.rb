@@ -1404,7 +1404,9 @@ if current_adapter?(:SQLite3Adapter) && !in_memory_db?
 
       handler = ActiveRecord::ConnectionAdapters::ConnectionHandler.new
       handler.establish_connection(db_config)
-      ActiveRecord::Base.connection_handlers = {}
+      assert_deprecated do
+        ActiveRecord::Base.connection_handlers = {}
+      end
       ActiveRecord::Base.connection_handler = handler
       ActiveRecord::Base.connects_to(database: { writing: :default, reading: :readonly })
     end
@@ -1426,8 +1428,13 @@ if current_adapter?(:SQLite3Adapter) && !in_memory_db?
     end
 
     def test_writing_and_reading_connections_are_the_same
-      rw_conn = ActiveRecord::Base.connection_handlers[:writing].connection_pool_list.first.connection
-      ro_conn = ActiveRecord::Base.connection_handlers[:reading].connection_pool_list.first.connection
+      if ActiveRecord::Base.legacy_connection_handling
+        rw_conn = ActiveRecord::Base.connection_handlers[:writing].connection_pool_list.first.connection
+        ro_conn = ActiveRecord::Base.connection_handlers[:reading].connection_pool_list.first.connection
+      else
+        rw_conn = ActiveRecord::Base.connection_handler.connection_pool_list(:writing).first.connection
+        ro_conn = ActiveRecord::Base.connection_handler.connection_pool_list(:reading).first.connection
+      end
 
       assert_equal rw_conn, ro_conn
     end

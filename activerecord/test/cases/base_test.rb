@@ -1669,12 +1669,31 @@ class BasicsTest < ActiveRecord::TestCase
     assert_equal "`connects_to` can only be called on ActiveRecord::Base or abstract classes", error.message
   end
 
-  test "cannot call connected_to on subclasses of ActiveRecord::Base" do
+  test "cannot call connected_to on subclasses of ActiveRecord::Base with legacy connection handling" do
+    old_value = ActiveRecord::Base.legacy_connection_handling
+    ActiveRecord::Base.legacy_connection_handling = true
+
     error = assert_raises(NotImplementedError) do
       Bird.connected_to(role: :reading) { }
     end
 
     assert_equal "`connected_to` can only be called on ActiveRecord::Base", error.message
+  ensure
+    ActiveRecord::Base.legacy_connection_handling = old_value
+  end
+
+  test "cannot call connected_to with role and shard on non-abstract classes" do
+    error = assert_raises(NotImplementedError) do
+      Bird.connected_to(role: :reading, shard: :default) { }
+    end
+
+    assert_equal "calling `connected_to` with `role` and `shard` is only allowed on ActiveRecord::Base or abstract classes", error.message
+  end
+
+  test "can call connected_to with role and shard on abstract classes" do
+    AbstractCompany.connected_to(role: :reading, shard: :default) do
+      assert AbstractCompany.connected_to?(role: :reading, shard: :default)
+    end
   end
 
   test "preventing writes applies to all connections on a handler" do

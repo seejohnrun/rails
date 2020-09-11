@@ -1019,12 +1019,18 @@ module ActiveRecord
         owner_to_pool_manager.keys
       end
 
-      def connection_pool_list
-        owner_to_pool_manager.values.flat_map { |m| m.pool_configs.map(&:pool) }
+      def connection_pool_list(role = nil)
+        if ActiveRecord::Base.legacy_connection_handling
+          ActiveSupport::Deprecation.warn("In Rails 6.2 `connection_pool_list` will return all connections. To get only `writing` or `reading` connections, set `legacy_connection_handling` to false and pass a `role`.")
+        end
+        owner_to_pool_manager.values.flat_map { |m| m.pool_configs(role).map(&:pool) }
       end
       alias :connection_pools :connection_pool_list
 
-      def establish_connection(config, owner_name: Base.name, shard: Base.default_shard)
+      def establish_connection(config, owner_name: Base.name, role: Base.default_role, shard: Base.default_shard)
+        if ActiveRecord::Base.legacy_connection_handling
+          ActiveSupport::Deprecation.warn("In Rails 6.2 `establish_connection` will default to establishing a connection with the `writing` role. Pass a `role` kwarg to establish a connection for a different.")
+        end
         owner_name = config.to_s if config.is_a?(Symbol)
 
         pool_config = resolve_pool_config(config, owner_name)
@@ -1033,7 +1039,9 @@ module ActiveRecord
         # Protects the connection named `ActiveRecord::Base` from being removed
         # if the user calls `establish_connection :primary`.
         if owner_to_pool_manager.key?(pool_config.connection_specification_name)
-          remove_connection_pool(pool_config.connection_specification_name, shard: shard)
+          ActiveSupport::Deprecation.silence do
+            remove_connection_pool(pool_config.connection_specification_name, role: role, shard: shard)
+          end
         end
 
         message_bus = ActiveSupport::Notifications.instrumenter
@@ -1043,9 +1051,13 @@ module ActiveRecord
           payload[:config] = db_config.configuration_hash
         end
 
-        owner_to_pool_manager[pool_config.connection_specification_name] ||= PoolManager.new
+        if ActiveRecord::Base.legacy_connection_handling
+          owner_to_pool_manager[pool_config.connection_specification_name] ||= LegacyPoolManager.new
+        else
+          owner_to_pool_manager[pool_config.connection_specification_name] ||= PoolManager.new
+        end
         pool_manager = get_pool_manager(pool_config.connection_specification_name)
-        pool_manager.set_pool_config(shard, pool_config)
+        pool_manager.set_pool_config(role, shard, pool_config)
 
         message_bus.instrument("!connection.active_record", payload) do
           pool_config.pool
@@ -1054,47 +1066,79 @@ module ActiveRecord
 
       # Returns true if there are any active connections among the connection
       # pools that the ConnectionHandler is managing.
-      def active_connections?
-        connection_pool_list.any?(&:active_connection?)
+      def active_connections?(role = nil)
+        if ActiveRecord::Base.legacy_connection_handling
+          ActiveSupport::Deprecation.warn("In Rails 6.2 `active_connections?` check all connections regardless of role. To check only `writing` or `reading` connections, set `legacy_connection_handling` to false and pass a `role`.")
+        end
+
+        ActiveSupport::Deprecation.silence do
+          connection_pool_list(role).any?(&:active_connection?)
+        end
       end
 
       # Returns any connections in use by the current thread back to the pool,
       # and also returns connections to the pool cached by threads that are no
       # longer alive.
-      def clear_active_connections!
-        connection_pool_list.each(&:release_connection)
+      def clear_active_connections!(role = nil)
+        if ActiveRecord::Base.legacy_connection_handling
+          ActiveSupport::Deprecation.warn("In Rails 6.2 `clear_active_connections` will clear all connections regardless of role. To clear only `writing` or `reading` connections, set `legacy_connection_handling` to false and pass a `role`.")
+        end
+
+        ActiveSupport::Deprecation.silence do
+          connection_pool_list(role).each(&:release_connection)
+        end
       end
 
       # Clears the cache which maps classes.
       #
       # See ConnectionPool#clear_reloadable_connections! for details.
-      def clear_reloadable_connections!
-        connection_pool_list.each(&:clear_reloadable_connections!)
+      def clear_reloadable_connections!(role = nil)
+        if ActiveRecord::Base.legacy_connection_handling
+          ActiveSupport::Deprecation.warn("In Rails 6.2 `clear_reloadable_connections!` will clear all reloadable connections regardless of role. To clear only `writing` or `reading` reloadable connections, set `legacy_connection_handling` to false and pass a `role`.")
+        end
+
+        ActiveSupport::Deprecation.silence do
+          connection_pool_list(role).each(&:clear_reloadable_connections!)
+        end
       end
 
-      def clear_all_connections!
-        connection_pool_list.each(&:disconnect!)
+      def clear_all_connections!(role = nil)
+        if ActiveRecord::Base.legacy_connection_handling
+          ActiveSupport::Deprecation.warn("In Rails 6.2 `clear_all_connections!` will clear all connections regardless of role. To clear `writing` or `reading` connections, set `legacy_connection_handling` to false and pass a `role`.")
+        end
+
+        ActiveSupport::Deprecation.silence do
+          connection_pool_list(role).each(&:disconnect!)
+        end
       end
 
       # Disconnects all currently idle connections.
       #
       # See ConnectionPool#flush! for details.
-      def flush_idle_connections!
-        connection_pool_list.each(&:flush!)
+      def flush_idle_connections!(role = nil)
+        if ActiveRecord::Base.legacy_connection_handling
+          ActiveSupport::Deprecation.warn("In Rails 6.2 `flush_idle_connections!` will flush all idle connections regardless of role. To flush idle `writing` or `reading` connections, set `legacy_connection_handling` to false and pass a `role`.")
+        end
+
+        ActiveSupport::Deprecation.silence do
+          connection_pool_list(role).each(&:flush!)
+        end
       end
 
       # Locate the connection of the nearest super class. This can be an
       # active or defined connection: if it is the latter, it will be
       # opened and set as the active connection for the class it was defined
       # for (not necessarily the current class).
-      def retrieve_connection(spec_name, shard: ActiveRecord::Base.default_shard) # :nodoc:
-        pool = retrieve_connection_pool(spec_name, shard: shard)
+      def retrieve_connection(spec_name, role: ActiveRecord::Base.default_role, shard: ActiveRecord::Base.default_shard) # :nodoc:
+        pool = retrieve_connection_pool(spec_name, role: role, shard: shard)
 
         unless pool
           if shard != ActiveRecord::Base.default_shard
             message = "No connection pool for '#{spec_name}' found for the '#{shard}' shard."
           elsif ActiveRecord::Base.connection_handler != ActiveRecord::Base.default_connection_handler
             message = "No connection pool for '#{spec_name}' found for the '#{ActiveRecord::Base.current_role}' role."
+          elsif role != ActiveRecord::Base.default_role
+            message = "No connection pool for '#{spec_name}' found for the '#{role}' role."
           else
             message = "No connection pool for '#{spec_name}' found."
           end
@@ -1107,8 +1151,11 @@ module ActiveRecord
 
       # Returns true if a connection that's accessible to this class has
       # already been opened.
-      def connected?(spec_name, shard: ActiveRecord::Base.default_shard)
-        pool = retrieve_connection_pool(spec_name, shard: shard)
+      def connected?(spec_name, role: ActiveRecord::Base.default_role, shard: ActiveRecord::Base.default_shard)
+        if ActiveRecord::Base.legacy_connection_handling
+          ActiveSupport::Deprecation.warn("In Rails 6.2 `connected?` will default to checking if the connection is connected for the writing role. Pass the `role:` kwarg to check another connection.")
+        end
+        pool = retrieve_connection_pool(spec_name, role: role, shard: shard)
         pool && pool.connected?
       end
 
@@ -1116,14 +1163,18 @@ module ActiveRecord
       # connection and the defined connection (if they exist). The result
       # can be used as an argument for #establish_connection, for easily
       # re-establishing the connection.
-      def remove_connection(owner, shard: ActiveRecord::Base.default_shard)
-        remove_connection_pool(owner, shard: shard)&.configuration_hash
+      def remove_connection(owner, role: ActiveRecord::Base.default_role, shard: ActiveRecord::Base.default_shard)
+        remove_connection_pool(owner, role: role, shard: shard)&.configuration_hash
       end
       deprecate remove_connection: "Use #remove_connection_pool, which now returns a DatabaseConfig object instead of a Hash"
 
-      def remove_connection_pool(owner, shard: ActiveRecord::Base.default_shard)
+      def remove_connection_pool(owner, role: ActiveRecord::Base.default_role, shard: ActiveRecord::Base.default_shard)
+        if ActiveRecord::Base.legacy_connection_handling
+          ActiveSupport::Deprecation.warn("In Rails 6.2 `remove_connection_pool` will default to removing the connection from the writing role. To remove a connection from another role, pass the `role` kwarg.")
+        end
+
         if pool_manager = get_pool_manager(owner)
-          pool_config = pool_manager.remove_pool_config(shard)
+          pool_config = pool_manager.remove_pool_config(role, shard)
 
           if pool_config
             pool_config.disconnect!
@@ -1135,8 +1186,8 @@ module ActiveRecord
       # Retrieving the connection pool happens a lot, so we cache it in @owner_to_pool_manager.
       # This makes retrieving the connection pool O(1) once the process is warm.
       # When a connection is established or removed, we invalidate the cache.
-      def retrieve_connection_pool(owner, shard: ActiveRecord::Base.default_shard)
-        pool_config = get_pool_manager(owner)&.get_pool_config(shard)
+      def retrieve_connection_pool(owner, role: ActiveRecord::Base.default_role, shard: ActiveRecord::Base.default_shard)
+        pool_config = get_pool_manager(owner)&.get_pool_config(role, shard)
         pool_config&.pool
       end
 

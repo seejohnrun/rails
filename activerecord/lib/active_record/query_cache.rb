@@ -28,8 +28,18 @@ module ActiveRecord
     def self.run
       pools = []
 
-      ActiveRecord::Base.connection_handlers.each do |key, handler|
-        pools.concat(handler.connection_pool_list.reject { |p| p.query_cache_enabled }.each { |p| p.enable_query_cache! })
+      if ActiveRecord::Base.legacy_connection_handling
+        ActiveSupport::Deprecation.silence do
+          ActiveRecord::Base.connection_handlers.each do |key, handler|
+            ActiveSupport::Deprecation.silence do
+              pools.concat(handler.connection_pool_list.reject { |p| p.query_cache_enabled }.each { |p| p.enable_query_cache! })
+            end
+          end
+        end
+      else
+        ActiveSupport::Deprecation.silence do
+          pools.concat(ActiveRecord::Base.connection_handler.connection_pool_list.reject { |p| p.query_cache_enabled }.each { |p| p.enable_query_cache! })
+        end
       end
 
       pools
@@ -38,9 +48,21 @@ module ActiveRecord
     def self.complete(pools)
       pools.each { |pool| pool.disable_query_cache! }
 
-      ActiveRecord::Base.connection_handlers.each do |_, handler|
-        handler.connection_pool_list.each do |pool|
-          pool.release_connection if pool.active_connection? && !pool.connection.transaction_open?
+      if ActiveRecord::Base.legacy_connection_handling
+        ActiveSupport::Deprecation.silence do
+          ActiveRecord::Base.connection_handlers.each do |_, handler|
+            ActiveSupport::Deprecation.silence do
+              handler.connection_pool_list.each do |pool|
+                pool.release_connection if pool.active_connection? && !pool.connection.transaction_open?
+              end
+            end
+          end
+        end
+      else
+        ActiveSupport::Deprecation.silence do
+          ActiveRecord::Base.connection_handler.connection_pool_list.each do |pool|
+            pool.release_connection if pool.active_connection? && !pool.connection.transaction_open?
+          end
         end
       end
     end
