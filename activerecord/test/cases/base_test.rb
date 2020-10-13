@@ -1602,6 +1602,9 @@ class BasicsTest < ActiveRecord::TestCase
   end
 
   test "creating a record raises if preventing writes" do
+    old_value = ActiveRecord::Base.legacy_connection_handling
+    ActiveRecord::Base.legacy_connection_handling = true
+
     error = assert_raises ActiveRecord::ReadOnlyError do
       ActiveRecord::Base.connection_handler.while_preventing_writes do
         Bird.create! name: "Bluejay"
@@ -1609,6 +1612,8 @@ class BasicsTest < ActiveRecord::TestCase
     end
 
     assert_match %r/\AWrite query attempted while in readonly mode: INSERT /, error.message
+  ensure
+    ActiveRecord::Base.legacy_connection_handling = old_value
   end
 
   test "updating a record raises if preventing writes" do
@@ -1719,7 +1724,9 @@ class BasicsTest < ActiveRecord::TestCase
   end
 
   unless in_memory_db?
-    test "preventing writes with multiple handlers" do
+    test "preventing writes with multiple handlers with legacy handling" do
+      old_value = ActiveRecord::Base.legacy_connection_handling
+      ActiveRecord::Base.legacy_connection_handling = true
       ActiveRecord::Base.connects_to(database: { writing: :arunit, reading: :arunit })
 
       conn1_error = assert_raises ActiveRecord::ReadOnlyError do
@@ -1745,6 +1752,56 @@ class BasicsTest < ActiveRecord::TestCase
       end
 
       assert_match %r/\AWrite query attempted while in readonly mode: INSERT /, conn2_error.message
+    ensure
+      clean_up_legacy_connection_handlers
+      ActiveRecord::Base.establish_connection(:arunit)
+      ActiveRecord::Base.legacy_connection_handling = old_value
+    end
+
+    test "preventing writes with multiple connections" do
+      ActiveRecord::Base.connects_to(database: { writing: :arunit, reading: :arunit })
+
+      conn1_error = assert_raises ActiveRecord::ReadOnlyError do
+        ActiveRecord::Base.connected_to(role: :writing) do
+          assert_equal :writing, ActiveRecord::Base.current_role
+
+          ActiveRecord::Base.while_preventing_writes do
+            Bird.create!(name: "Bluejay")
+          end
+        end
+      end
+
+      assert_match %r/\AWrite query attempted while in readonly mode: INSERT /, conn1_error.message
+
+      conn2_error = assert_raises ActiveRecord::ReadOnlyError do
+        ActiveRecord::Base.connected_to(role: :reading) do
+          assert_equal :reading, ActiveRecord::Base.current_role
+
+          ActiveRecord::Base.while_preventing_writes do
+            Bird.create!(name: "Bluejay")
+          end
+        end
+      end
+
+      assert_match %r/\AWrite query attempted while in readonly mode: INSERT /, conn2_error.message
+    ensure
+      clean_up_connection_handler
+      ActiveRecord::Base.establish_connection(:arunit)
+    end
+
+    test "preventing writes works with granular swapping" do
+      ActiveRecord::Base.connects_to(database: { writing: :arunit, reading: :arunit })
+      ARUnit2Model.connects_to(database: { writing: :arunit2, reading: :arunit2 })
+
+      ARUnit2Model.connected_to(role: :reading) do
+        error = assert_raises ActiveRecord::ReadOnlyError do
+          OtherDog.create!
+        end
+
+        assert_match %r/\AWrite query attempted while in readonly mode: INSERT /, error.message
+
+        assert Bird.create!(name: "Bluejay")
+      end
     ensure
       clean_up_connection_handler
       ActiveRecord::Base.establish_connection(:arunit)

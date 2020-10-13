@@ -182,6 +182,16 @@ module ActiveRecord
         default_shard
       end
 
+      def self.current_preventing_writes
+        # we cant use arunit 2 cause it goes up to base
+        role_and_shard_stack.reverse_each do |hash|
+          return hash[:prevent_writes] if hash[:prevent_writes] && hash[:klass] == Base
+          return hash[:prevent_writes] if hash[:prevent_writes] && hash[:klass] == abstract_base_class
+        end
+
+        false
+      end
+
       # Returns the symbol representing the current connected role.
       #
       #   ActiveRecord::Base.connected_to(role: :writing) do
