@@ -176,7 +176,10 @@ module ActiveRecord
       end
     end
 
-    def test_preventing_writes_predicate
+    def test_preventing_writes_predicate_on_legacy_connection_handling
+      old_value = ActiveRecord::Base.legacy_connection_handling
+      ActiveRecord::Base.legacy_connection_handling = true
+
       assert_not_predicate @connection, :preventing_writes?
 
       @connection_handler.while_preventing_writes do
@@ -184,9 +187,24 @@ module ActiveRecord
       end
 
       assert_not_predicate @connection, :preventing_writes?
+    ensure
+      ActiveRecord::Base.legacy_connection_handling = old_value
     end
 
-    def test_errors_when_an_insert_query_is_called_while_preventing_writes
+    def test_preventing_writes_predicate
+      assert_not_predicate @connection, :preventing_writes?
+
+      ActiveRecord::Base.while_preventing_writes do
+        assert_predicate @connection, :preventing_writes?
+      end
+
+      assert_not_predicate @connection, :preventing_writes?
+    end
+
+    def test_errors_when_an_insert_query_is_called_while_preventing_writes_on_legacy_connection_handling
+      old_value = ActiveRecord::Base.legacy_connection_handling
+      ActiveRecord::Base.legacy_connection_handling = true
+
       assert_no_queries do
         assert_raises(ActiveRecord::ReadOnlyError) do
           @connection_handler.while_preventing_writes do
@@ -196,9 +214,26 @@ module ActiveRecord
           end
         end
       end
+    ensure
+      ActiveRecord::Base.legacy_connection_handling = old_value
     end
 
-    def test_errors_when_an_update_query_is_called_while_preventing_writes
+    def test_errors_when_an_insert_query_is_called_while_preventing_writes
+      assert_no_queries do
+        assert_raises(ActiveRecord::ReadOnlyError) do
+          ActiveRecord::Base.while_preventing_writes do
+            @connection.transaction do
+              @connection.insert("INSERT INTO subscribers(nick) VALUES ('138853948594')", nil, false)
+            end
+          end
+        end
+      end
+    end
+
+    def test_errors_when_an_update_query_is_called_while_preventing_writes_for_legacy_connection_handling
+      old_value = ActiveRecord::Base.legacy_connection_handling
+      ActiveRecord::Base.legacy_connection_handling = true
+
       @connection.insert("INSERT INTO subscribers(nick) VALUES ('138853948594')")
 
       assert_no_queries do
@@ -210,9 +245,28 @@ module ActiveRecord
           end
         end
       end
+    ensure
+      ActiveRecord::Base.legacy_connection_handling = old_value
     end
 
-    def test_errors_when_a_delete_query_is_called_while_preventing_writes
+    def test_errors_when_an_update_query_is_called_while_preventing_writes
+      @connection.insert("INSERT INTO subscribers(nick) VALUES ('138853948594')")
+
+      assert_no_queries do
+        assert_raises(ActiveRecord::ReadOnlyError) do
+          ActiveRecord::Base.while_preventing_writes do
+            @connection.transaction do
+              @connection.update("UPDATE subscribers SET nick = '9989' WHERE nick = '138853948594'")
+            end
+          end
+        end
+      end
+    end
+
+    def test_errors_when_a_delete_query_is_called_while_preventing_writes_for_legacy_connection_handling
+      old_value = ActiveRecord::Base.legacy_connection_handling
+      ActiveRecord::Base.legacy_connection_handling = true
+
       @connection.insert("INSERT INTO subscribers(nick) VALUES ('138853948594')")
 
       assert_no_queries do
@@ -224,12 +278,41 @@ module ActiveRecord
           end
         end
       end
+    ensure
+      ActiveRecord::Base.legacy_connection_handling = old_value
+    end
+
+    def test_errors_when_a_delete_query_is_called_while_preventing_writes
+      @connection.insert("INSERT INTO subscribers(nick) VALUES ('138853948594')")
+
+      assert_no_queries do
+        assert_raises(ActiveRecord::ReadOnlyError) do
+          ActiveRecord::Base.while_preventing_writes do
+            @connection.transaction do
+              @connection.delete("DELETE FROM subscribers WHERE nick = '138853948594'")
+            end
+          end
+        end
+      end
+    end
+
+    def test_doesnt_error_when_a_select_query_is_called_while_preventing_writes_for_legacy_connection_handling
+      old_value = ActiveRecord::Base.legacy_connection_handling
+      ActiveRecord::Base.legacy_connection_handling = true
+      @connection.insert("INSERT INTO subscribers(nick) VALUES ('138853948594')")
+
+      @connection_handler.while_preventing_writes do
+        result = @connection.select_all("SELECT subscribers.* FROM subscribers WHERE nick = '138853948594'")
+        assert_equal 1, result.length
+      end
+    ensure
+      ActiveRecord::Base.legacy_connection_handling = old_value
     end
 
     def test_doesnt_error_when_a_select_query_is_called_while_preventing_writes
       @connection.insert("INSERT INTO subscribers(nick) VALUES ('138853948594')")
 
-      @connection_handler.while_preventing_writes do
+      ActiveRecord::Base.while_preventing_writes do
         result = @connection.select_all("SELECT subscribers.* FROM subscribers WHERE nick = '138853948594'")
         assert_equal 1, result.length
       end

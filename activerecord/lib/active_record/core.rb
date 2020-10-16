@@ -182,11 +182,10 @@ module ActiveRecord
         default_shard
       end
 
-      def self.current_preventing_writes
-        # we cant use arunit 2 cause it goes up to base
+      def self.current_preventing_writes # :nodoc:
         role_and_shard_stack.reverse_each do |hash|
-          return hash[:prevent_writes] if hash[:prevent_writes] && hash[:klass] == Base
-          return hash[:prevent_writes] if hash[:prevent_writes] && hash[:klass] == abstract_base_class
+          return hash[:prevent_writes] if !hash[:prevent_writes].nil? && hash[:klass] == Base
+          return hash[:prevent_writes] if !hash[:prevent_writes].nil? && hash[:klass] == abstract_base_class
         end
 
         false
@@ -204,7 +203,7 @@ module ActiveRecord
       def self.current_role
         if ActiveRecord::Base.legacy_connection_handling
           ActiveSupport::Deprecation.silence do
-            connection_handlers.key(connection_handler)
+            connection_handlers.key(connection_handler) || default_role
           end
         else
           role_and_shard_stack.reverse_each do |hash|

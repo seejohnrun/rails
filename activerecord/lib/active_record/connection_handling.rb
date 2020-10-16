@@ -185,7 +185,7 @@ module ActiveRecord
     end
 
     def while_preventing_writes(enabled = true, &block)
-      connected_to(role: current_role || default_role, prevent_writes: enabled, &block)
+      connected_to(role: current_role, prevent_writes: enabled, &block)
     end
 
     # Returns true if role is the current connected role.
@@ -344,7 +344,7 @@ module ActiveRecord
 
         if ActiveRecord::Base.legacy_connection_handling
           with_role(role, prevent_writes) do
-            self.role_and_shard_stack << { role: role, shard: shard, prevent_writes: prevent_writes, klass: self }
+            self.role_and_shard_stack << { shard: shard, klass: self }
             yield
           end
         else
