@@ -344,17 +344,17 @@ module ActiveRecord
 
         if ActiveRecord::Base.legacy_connection_handling
           with_role(role, prevent_writes) do
-            self.role_and_shard_stack << { shard: shard, klass: self }
+            self.connected_to_stack << { shard: shard, klass: self }
             yield
           end
         else
-          self.role_and_shard_stack << { role: role, shard: shard, prevent_writes: prevent_writes, klass: self }
+          self.connected_to_stack << { role: role, shard: shard, prevent_writes: prevent_writes, klass: self }
           return_value = yield
           return_value.load if return_value.is_a? ActiveRecord::Relation
           return_value
         end
       ensure
-        self.role_and_shard_stack.pop
+        self.connected_to_stack.pop
       end
 
       def swap_connection_handler(handler, &blk) # :nodoc:

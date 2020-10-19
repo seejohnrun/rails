@@ -174,7 +174,7 @@ module ActiveRecord
       end
 
       def self.current_shard # :nodoc:
-        role_and_shard_stack.reverse_each do |hash|
+        connected_to_stack.reverse_each do |hash|
           return hash[:shard] if hash[:shard] && hash[:klass] == Base
           return hash[:shard] if hash[:shard] && hash[:klass] == abstract_base_class
         end
@@ -183,7 +183,7 @@ module ActiveRecord
       end
 
       def self.current_preventing_writes # :nodoc:
-        role_and_shard_stack.reverse_each do |hash|
+        connected_to_stack.reverse_each do |hash|
           return hash[:prevent_writes] if !hash[:prevent_writes].nil? && hash[:klass] == Base
           return hash[:prevent_writes] if !hash[:prevent_writes].nil? && hash[:klass] == abstract_base_class
         end
@@ -206,7 +206,7 @@ module ActiveRecord
             connection_handlers.key(connection_handler) || default_role
           end
         else
-          role_and_shard_stack.reverse_each do |hash|
+          connected_to_stack.reverse_each do |hash|
             return hash[:role] if hash[:role] && hash[:klass] == Base
             return hash[:role] if hash[:role] && hash[:klass] == abstract_base_class
           end
@@ -215,13 +215,13 @@ module ActiveRecord
         end
       end
 
-      def self.role_and_shard_stack # :nodoc:
-        if role_and_shard_stack = Thread.current.thread_variable_get(:ar_role_and_shard_stack)
-          role_and_shard_stack
+      def self.connected_to_stack # :nodoc:
+        if connected_to_stack = Thread.current.thread_variable_get(:ar_connected_to_stack)
+          connected_to_stack
         else
-          role_and_shard_stack = Concurrent::Array.new
-          Thread.current.thread_variable_set(:ar_role_and_shard_stack, role_and_shard_stack)
-          role_and_shard_stack
+          connected_to_stack = Concurrent::Array.new
+          Thread.current.thread_variable_set(:ar_connected_to_stack, connected_to_stack)
+          connected_to_stack
         end
       end
 
