@@ -335,7 +335,7 @@ module ActiveRecord
         prevent_writes = true if role == reading_role
 
         with_handler(role.to_sym) do
-          connection_handler.while_preventing_writes(prevent_writes, &blk)
+          connection_handler.while_preventing_writes(prevent_writes, true, &blk)
         end
       end
 

@@ -1606,8 +1606,10 @@ class BasicsTest < ActiveRecord::TestCase
     ActiveRecord::Base.legacy_connection_handling = true
 
     error = assert_raises ActiveRecord::ReadOnlyError do
-      ActiveRecord::Base.connection_handler.while_preventing_writes do
-        Bird.create! name: "Bluejay"
+      assert_deprecated do
+        ActiveRecord::Base.connection_handler.while_preventing_writes do
+          Bird.create! name: "Bluejay"
+        end
       end
     end
 
@@ -1623,8 +1625,10 @@ class BasicsTest < ActiveRecord::TestCase
     bird = Bird.create! name: "Bluejay"
 
     error = assert_raises ActiveRecord::ReadOnlyError do
-      ActiveRecord::Base.connection_handler.while_preventing_writes do
-        bird.update! name: "Robin"
+      assert_deprecated do
+        ActiveRecord::Base.connection_handler.while_preventing_writes do
+          bird.update! name: "Robin"
+        end
       end
     end
 
@@ -1637,8 +1641,10 @@ class BasicsTest < ActiveRecord::TestCase
     bird = Bird.create! name: "Bluejay"
 
     error = assert_raises ActiveRecord::ReadOnlyError do
-      ActiveRecord::Base.while_preventing_writes do
-        bird.update! name: "Robin"
+      assert_deprecated do
+        ActiveRecord::Base.while_preventing_writes do
+          bird.update! name: "Robin"
+        end
       end
     end
 
@@ -1652,8 +1658,10 @@ class BasicsTest < ActiveRecord::TestCase
     bird = Bird.create! name: "Bluejay"
 
     error = assert_raises ActiveRecord::ReadOnlyError do
-      ActiveRecord::Base.connection_handler.while_preventing_writes do
-        bird.destroy!
+      assert_deprecated do
+        ActiveRecord::Base.connection_handler.while_preventing_writes do
+          bird.destroy!
+        end
       end
     end
 
@@ -1677,24 +1685,30 @@ class BasicsTest < ActiveRecord::TestCase
   test "selecting a record does not raise if preventing writes" do
     bird = Bird.create! name: "Bluejay"
 
-    ActiveRecord::Base.connection_handler.while_preventing_writes do
-      assert_equal bird, Bird.where(name: "Bluejay").first
+    assert_deprecated do
+      ActiveRecord::Base.connection_handler.while_preventing_writes do
+        assert_equal bird, Bird.where(name: "Bluejay").first
+      end
     end
   end
 
   test "an explain query does not raise if preventing writes" do
     Bird.create!(name: "Bluejay")
 
-    ActiveRecord::Base.connection_handler.while_preventing_writes do
-      assert_queries(2) { Bird.where(name: "Bluejay").explain }
+    assert_deprecated do
+      ActiveRecord::Base.connection_handler.while_preventing_writes do
+        assert_queries(2) { Bird.where(name: "Bluejay").explain }
+      end
     end
   end
 
   test "an empty transaction does not raise if preventing writes" do
-    ActiveRecord::Base.connection_handler.while_preventing_writes do
-      assert_queries(2, ignore_none: true) do
-        Bird.transaction do
-          ActiveRecord::Base.connection.materialize_transactions
+    assert_deprecated do
+      ActiveRecord::Base.connection_handler.while_preventing_writes do
+        assert_queries(2, ignore_none: true) do
+          Bird.transaction do
+            ActiveRecord::Base.connection.materialize_transactions
+          end
         end
       end
     end
@@ -1740,20 +1754,24 @@ class BasicsTest < ActiveRecord::TestCase
     ActiveRecord::Base.legacy_connection_handling = true
 
     conn1_error = assert_raises ActiveRecord::ReadOnlyError do
-      ActiveRecord::Base.connection_handler.while_preventing_writes do
-        assert_equal ActiveRecord::Base.connection, Bird.connection
-        assert_not_equal ARUnit2Model.connection, Bird.connection
-        Bird.create!(name: "Bluejay")
+      assert_deprecated do
+        ActiveRecord::Base.connection_handler.while_preventing_writes do
+          assert_equal ActiveRecord::Base.connection, Bird.connection
+          assert_not_equal ARUnit2Model.connection, Bird.connection
+          Bird.create!(name: "Bluejay")
+        end
       end
     end
 
     assert_match %r/\AWrite query attempted while in readonly mode: INSERT /, conn1_error.message
 
     conn2_error = assert_raises ActiveRecord::ReadOnlyError do
-      ActiveRecord::Base.connection_handler.while_preventing_writes do
-        assert_not_equal ActiveRecord::Base.connection, Professor.connection
-        assert_equal ARUnit2Model.connection, Professor.connection
-        Professor.create!(name: "Professor Bluejay")
+      assert_deprecated do
+        ActiveRecord::Base.connection_handler.while_preventing_writes do
+          assert_not_equal ActiveRecord::Base.connection, Professor.connection
+          assert_equal ARUnit2Model.connection, Professor.connection
+          Professor.create!(name: "Professor Bluejay")
+        end
       end
     end
 
@@ -1794,8 +1812,10 @@ class BasicsTest < ActiveRecord::TestCase
         ActiveRecord::Base.connected_to(role: :writing) do
           assert_equal :writing, ActiveRecord::Base.current_role
 
-          ActiveRecord::Base.connection_handler.while_preventing_writes do
-            Bird.create!(name: "Bluejay")
+          assert_deprecated do
+            ActiveRecord::Base.connection_handler.while_preventing_writes do
+              Bird.create!(name: "Bluejay")
+            end
           end
         end
       end
@@ -1806,8 +1826,10 @@ class BasicsTest < ActiveRecord::TestCase
         ActiveRecord::Base.connected_to(role: :reading) do
           assert_equal :reading, ActiveRecord::Base.current_role
 
-          ActiveRecord::Base.connection_handler.while_preventing_writes do
-            Bird.create!(name: "Bluejay")
+          assert_deprecated do
+            ActiveRecord::Base.connection_handler.while_preventing_writes do
+              Bird.create!(name: "Bluejay")
+            end
           end
         end
       end

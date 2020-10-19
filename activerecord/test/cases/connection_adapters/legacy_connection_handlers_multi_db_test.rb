@@ -148,9 +148,7 @@ module ActiveRecord
 
           ActiveRecord::Base.connected_to(role: :reading) do
             @ro_handler = ActiveRecord::Base.connection_handler
-            assert_deprecated do
-              assert_equal ActiveRecord::Base.connection_handler, ActiveRecord::Base.connection_handlers[:reading]
-            end
+            assert_equal ActiveRecord::Base.connection_handler, assert_deprecated { ActiveRecord::Base.connection_handlers[:reading] }
             assert_equal :reading, ActiveRecord::Base.current_role
             assert ActiveRecord::Base.connected_to?(role: :reading)
             assert_not ActiveRecord::Base.connected_to?(role: :writing)

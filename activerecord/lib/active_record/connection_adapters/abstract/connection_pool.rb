@@ -1008,7 +1008,11 @@ module ActiveRecord
       #
       # See `READ_QUERY` for the queries that are blocked by this
       # method.
-      def while_preventing_writes(enabled = true)
+      def while_preventing_writes(enabled = true, silenced = false)
+        unless silenced
+          ActiveSupport::Deprecation.warn("Calling `while_preventing_writes` on the connection handler is deprecated and will be removed in Rails 6.2. Set `legacy_connection_handling` to `false` and use `ActiveRecord::Base.while_preventing_writes`.")
+        end
+
         original, self.prevent_writes = self.prevent_writes, enabled
         yield
       ensure

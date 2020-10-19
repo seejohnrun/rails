@@ -182,8 +182,10 @@ module ActiveRecord
 
       assert_not_predicate @connection, :preventing_writes?
 
-      @connection_handler.while_preventing_writes do
-        assert_predicate @connection, :preventing_writes?
+      assert_deprecated do
+        @connection_handler.while_preventing_writes do
+          assert_predicate @connection, :preventing_writes?
+        end
       end
 
       assert_not_predicate @connection, :preventing_writes?
@@ -207,9 +209,11 @@ module ActiveRecord
 
       assert_no_queries do
         assert_raises(ActiveRecord::ReadOnlyError) do
-          @connection_handler.while_preventing_writes do
-            @connection.transaction do
-              @connection.insert("INSERT INTO subscribers(nick) VALUES ('138853948594')", nil, false)
+          assert_deprecated do
+            @connection_handler.while_preventing_writes do
+              @connection.transaction do
+                @connection.insert("INSERT INTO subscribers(nick) VALUES ('138853948594')", nil, false)
+              end
             end
           end
         end
@@ -238,9 +242,11 @@ module ActiveRecord
 
       assert_no_queries do
         assert_raises(ActiveRecord::ReadOnlyError) do
-          @connection_handler.while_preventing_writes do
-            @connection.transaction do
-              @connection.update("UPDATE subscribers SET nick = '9989' WHERE nick = '138853948594'")
+          assert_deprecated do
+            @connection_handler.while_preventing_writes do
+              @connection.transaction do
+                @connection.update("UPDATE subscribers SET nick = '9989' WHERE nick = '138853948594'")
+              end
             end
           end
         end
@@ -271,9 +277,11 @@ module ActiveRecord
 
       assert_no_queries do
         assert_raises(ActiveRecord::ReadOnlyError) do
-          @connection_handler.while_preventing_writes do
-            @connection.transaction do
-              @connection.delete("DELETE FROM subscribers WHERE nick = '138853948594'")
+          assert_deprecated do
+            @connection_handler.while_preventing_writes do
+              @connection.transaction do
+                @connection.delete("DELETE FROM subscribers WHERE nick = '138853948594'")
+              end
             end
           end
         end
@@ -301,9 +309,11 @@ module ActiveRecord
       ActiveRecord::Base.legacy_connection_handling = true
       @connection.insert("INSERT INTO subscribers(nick) VALUES ('138853948594')")
 
-      @connection_handler.while_preventing_writes do
-        result = @connection.select_all("SELECT subscribers.* FROM subscribers WHERE nick = '138853948594'")
-        assert_equal 1, result.length
+      assert_deprecated do
+        @connection_handler.while_preventing_writes do
+          result = @connection.select_all("SELECT subscribers.* FROM subscribers WHERE nick = '138853948594'")
+          assert_equal 1, result.length
+        end
       end
     ensure
       ActiveRecord::Base.legacy_connection_handling = old_value
@@ -322,12 +332,14 @@ module ActiveRecord
       def test_doesnt_error_when_a_read_query_with_a_cte_is_called_while_preventing_writes
         @connection.insert("INSERT INTO subscribers(nick) VALUES ('138853948594')")
 
-        @connection_handler.while_preventing_writes do
-          result = @connection.select_all(<<~SQL)
+        assert_deprecated do
+          @connection_handler.while_preventing_writes do
+            result = @connection.select_all(<<~SQL)
             WITH matching_subscribers AS (SELECT subscribers.* FROM subscribers WHERE nick = '138853948594')
             SELECT * FROM matching_subscribers
-          SQL
-          assert_equal 1, result.length
+            SQL
+            assert_equal 1, result.length
+          end
         end
       end
     end
