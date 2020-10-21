@@ -1404,11 +1404,11 @@ if current_adapter?(:SQLite3Adapter) && !in_memory_db?
 
       handler = ActiveRecord::ConnectionAdapters::ConnectionHandler.new
       handler.establish_connection(db_config)
-      assert_deprecated do
-        ActiveRecord::Base.connection_handlers = {}
-      end
       ActiveRecord::Base.connection_handler = handler
+
       ActiveRecord::Base.connects_to(database: { writing: :default, reading: :readonly })
+
+      setup_shared_connection_pool
     end
 
     def teardown
@@ -1428,15 +1428,76 @@ if current_adapter?(:SQLite3Adapter) && !in_memory_db?
     end
 
     def test_writing_and_reading_connections_are_the_same
-      if ActiveRecord::Base.legacy_connection_handling
-        rw_conn = ActiveRecord::Base.connection_handlers[:writing].connection_pool_list.first.connection
-        ro_conn = ActiveRecord::Base.connection_handlers[:reading].connection_pool_list.first.connection
-      else
-        rw_conn = ActiveRecord::Base.connection_handler.connection_pool_list(:writing).first.connection
-        ro_conn = ActiveRecord::Base.connection_handler.connection_pool_list(:reading).first.connection
-      end
+      rw_conn = ActiveRecord::Base.connection_handler.connection_pool_list(:writing).first.connection
+      ro_conn = ActiveRecord::Base.connection_handler.connection_pool_list(:reading).first.connection
 
       assert_equal rw_conn, ro_conn
+    end
+
+    private
+      def config
+        { "default" => default_config, "readonly" => readonly_config }
+      end
+
+      def default_config
+        { "adapter" => "sqlite3", "database" => "test/fixtures/fixture_database.sqlite3" }
+      end
+
+      def readonly_config
+        default_config.merge("replica" => true)
+      end
+  end
+
+  class MultipleFixtureLegacyConnectionsTest < ActiveRecord::TestCase
+    include ActiveRecord::TestFixtures
+
+    fixtures :dogs
+
+    def setup
+      @old_value = ActiveRecord::Base.legacy_connection_handling
+      ActiveRecord::Base.legacy_connection_handling = true
+
+      @old_handler = ActiveRecord::Base.connection_handler
+      @prev_configs, ActiveRecord::Base.configurations = ActiveRecord::Base.configurations, config
+      db_config = ActiveRecord::DatabaseConfigurations::HashConfig.new(ENV["RAILS_ENV"], "readonly", readonly_config)
+
+      handler = ActiveRecord::ConnectionAdapters::ConnectionHandler.new
+      assert_deprecated do
+        handler.establish_connection(db_config)
+        ActiveRecord::Base.connection_handlers = {}
+      end
+      ActiveRecord::Base.connection_handler = handler
+      ActiveRecord::Base.connects_to(database: { writing: :default, reading: :readonly })
+
+      setup_shared_connection_pool
+    end
+
+    def teardown
+      ActiveRecord::Base.configurations = @prev_configs
+      ActiveRecord::Base.connection_handler = @old_handler
+      ActiveRecord::Base.legacy_connection_handling = false
+    end
+
+    def test_uses_writing_connection_for_fixtures
+      ActiveRecord::Base.connected_to(role: :reading) do
+        Dog.first
+
+        assert_nothing_raised do
+          ActiveRecord::Base.connected_to(role: :writing) { Dog.create! alias: "Doggo" }
+        end
+      end
+    end
+
+    def test_writing_and_reading_connections_are_the_same_with_legacy_handling
+      writing = assert_deprecated { ActiveRecord::Base.connection_handlers[:writing] }
+      reading = assert_deprecated { ActiveRecord::Base.connection_handlers[:reading] }
+
+      rw_conn = assert_deprecated { writing.connection_pool_list.first.connection }
+      ro_conn = assert_deprecated { reading.connection_pool_list.first.connection }
+
+      assert_equal rw_conn, ro_conn
+    ensure
+      ActiveRecord::Base.legacy_connection_handling = @old_value
     end
 
     private

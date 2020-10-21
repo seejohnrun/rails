@@ -202,7 +202,6 @@ class BasePreventWritesTest < ActiveRecord::TestCase
       end
 
       test "preventing writes with multiple handlers" do
-        skip "ugg"
         ActiveRecord::Base.connects_to(database: { writing: :arunit, reading: :arunit })
 
         conn1_error = assert_raises ActiveRecord::ReadOnlyError do
