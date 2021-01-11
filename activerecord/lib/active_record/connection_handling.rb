@@ -269,10 +269,6 @@ module ActiveRecord
       @connection_specification_name
     end
 
-    def primary_class? # :nodoc:
-      self == Base || defined?(ApplicationRecord) && self == ApplicationRecord
-    end
-
     # Returns the configuration of the associated connection as a hash:
     #
     #  ActiveRecord::Base.connection_config

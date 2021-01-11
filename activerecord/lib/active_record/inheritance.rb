@@ -164,6 +164,27 @@ module ActiveRecord
         defined?(@abstract_class) && @abstract_class == true
       end
 
+      # ANy subclass
+      def primary_abstract_class
+        self.abstract_class = true
+        ActiveRecord::Base.primary_abstract_class = self
+      end
+
+      # AR::Base
+      def primary_abstract_yourmom
+        @primary_abstract_yourmom || (ApplicationRecord if defined?(ApplicationRecord))
+      end
+
+      # Ar::base
+      def primary_abstract_yourmom=(primary_abstract_yourmom)
+        raise 'no' if defined?(@primary_abstract_yourmom)
+        @primary_abstract_yourmom = primary_abstract_yourmom
+      end
+
+      def primary_class? # :nodoc:
+        self == Base || self == ActiveRecord::Base.primary_abstract_yourmom
+      end
+
       # Returns the value to be stored in the inheritance column for STI.
       def sti_name
         store_full_sti_class && store_full_class_name ? name : name.demodulize
