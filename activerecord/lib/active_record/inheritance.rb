@@ -164,25 +164,23 @@ module ActiveRecord
         defined?(@abstract_class) && @abstract_class == true
       end
 
-      # ANy subclass
+      # Sets the class that is the primary abstract class which
+      # by default is ApplicationRecord. To set this to a different
+      # class, add `primary_abstract_class` to your class.
       def primary_abstract_class
+        raise ArgumentError, "Cannot re-define `primary_abstract_class`" if @primary_abstract_class
+        p "wtf mate #{@primary_abstract_class}"
+
         self.abstract_class = true
-        ActiveRecord::Base.primary_abstract_class = self
-      end
-
-      # AR::Base
-      def primary_abstract_yourmom
-        @primary_abstract_yourmom || (ApplicationRecord if defined?(ApplicationRecord))
-      end
-
-      # Ar::base
-      def primary_abstract_yourmom=(primary_abstract_yourmom)
-        raise 'no' if defined?(@primary_abstract_yourmom)
-        @primary_abstract_yourmom = primary_abstract_yourmom
+        @primary_abstract_class = self
       end
 
       def primary_class? # :nodoc:
-        self == Base || self == ActiveRecord::Base.primary_abstract_yourmom
+        ActiveSupport::Deprecation.new("You must define a `primary_abstract_class` in Rails 7+. Add `primary_abstract_class` to `ApplicationRecord` or the abstract class you want to use as the default.") unless @primary_abstract_class
+
+        primary_abstract_class = @primary_abstract_class || (ApplicationRecord if defined?(ApplicationRecord))
+
+        self == Base || self == primary_abstract_class
       end
 
       # Returns the value to be stored in the inheritance column for STI.

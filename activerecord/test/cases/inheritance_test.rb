@@ -34,6 +34,36 @@ class InheritanceTest < ActiveRecord::TestCase
   include InheritanceTestHelper
   fixtures :companies, :projects, :subscribers, :accounts, :vegetables, :memberships
 
+  def test_can_set_primary_abstract_class
+    old_value = ActiveRecord::Base.instance_variable_get(:@primary_abstract_class)
+
+    primary_record = Class.new(ActiveRecord::Base) do
+      primary_abstract_class
+    end
+
+    assert_predicate primary_record, :primary_class?
+  ensure
+    ActiveRecord::Base.instance_variable_set(:@primary_abstract_class, old_value)
+  end
+
+  def test_primary_abstract_class_cannot_be_reset
+    old_value = ActiveRecord::Base.instance_variable_get(:@primary_abstract_class)
+
+    primary_record = Class.new(ActiveRecord::Base) do
+      primary_abstract_class
+    end
+
+    assert_raises do
+      secondary_record = Class.new(ActiveRecord::Base) do
+        primary_abstract_class
+      end
+
+      secondary_record
+    end
+  ensure
+    ActiveRecord::Base.instance_variable_set(:@primary_abstract_class, old_value)
+  end
+
   def test_class_with_store_full_sti_class_returns_full_name
     with_store_full_sti_class do
       assert_equal "Namespaced::Company", Namespaced::Company.sti_name
