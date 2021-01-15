@@ -196,7 +196,9 @@ module ActiveRecord
         else
           connected_to_stack.reverse_each do |hash|
             return hash[:role] if hash[:role] && hash[:klasses].include?(Base)
-            return hash[:role] if hash[:role] && hash[:klasses].include?(abstract_base_class)
+            abstract_base_classes.each do |abstract_base_class|
+              return hash[:role] if hash[:role] && hash[:klasses].include?(abstract_base_class)
+            end
           end
 
           default_role
@@ -215,7 +217,9 @@ module ActiveRecord
       def self.current_shard
         connected_to_stack.reverse_each do |hash|
           return hash[:shard] if hash[:shard] && hash[:klasses].include?(Base)
-          return hash[:shard] if hash[:shard] && hash[:klasses].include?(abstract_base_class)
+          abstract_base_classes.each do |abstract_base_class|
+            return hash[:shard] if hash[:shard] && hash[:klasses].include?(abstract_base_class)
+          end
         end
 
         default_shard
@@ -237,7 +241,9 @@ module ActiveRecord
         else
           connected_to_stack.reverse_each do |hash|
             return hash[:prevent_writes] if !hash[:prevent_writes].nil? && hash[:klasses].include?(Base)
-            return hash[:prevent_writes] if !hash[:prevent_writes].nil? && hash[:klasses].include?(abstract_base_class)
+            abstract_base_classes.each do |abstract_base_class|
+              return hash[:prevent_writes] if !hash[:prevent_writes].nil? && hash[:klasses].include?(abstract_base_class)
+            end
           end
 
           false
@@ -254,15 +260,17 @@ module ActiveRecord
         end
       end
 
-      def self.abstract_base_class # :nodoc:
-        klass = self
+      def self.abstract_base_classes # :nodoc:
+        klasses = []
 
+        klass = self
         until klass == Base
-          break if klass.abstract_class?
+          klasses << klass if klass.abstract_class?
+          break if klass.has_a_connection?
           klass = klass.superclass
         end
 
-        klass
+        klasses
       end
 
       def self.allow_unsafe_raw_sql # :nodoc:
