@@ -7,6 +7,7 @@ require "active_support/core_ext/array/access"
 require "active_support/core_ext/enumerable"
 require "active_support/core_ext/module/attribute_accessors"
 require "active_support/actionable_error"
+require "active_record/advisory_lock_base"
 
 module ActiveRecord
   class MigrationError < ActiveRecordError #:nodoc:
@@ -1427,8 +1428,11 @@ module ActiveRecord
       end
 
       def with_advisory_lock_connection
+        # application recorV
         pool = ActiveRecord::ConnectionAdapters::ConnectionHandler.new.establish_connection(
-          ActiveRecord::Base.connection_db_config
+          # clobbered AR BASE
+          ActiveRecord::Base.connection_db_config,
+          owner_name: AdvisoryLockBase # loads ar base -> application record
         )
 
         pool.with_connection { |connection| yield(connection) }

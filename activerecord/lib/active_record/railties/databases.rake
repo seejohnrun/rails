@@ -89,7 +89,7 @@ db_namespace = namespace :db do
     original_db_config = ActiveRecord::Base.connection_db_config
     ActiveRecord::Base.configurations.configs_for(env_name: ActiveRecord::Tasks::DatabaseTasks.env).each do |db_config|
       ActiveRecord::Base.establish_connection(db_config)
-      ActiveRecord::Tasks::DatabaseTasks.migrate
+      ActiveRecord::Tasks::DatabaseTasks.migrate #adv locks # ApplicationRecord.connects_to => establsish_connection
     end
     db_namespace["_dump"].invoke
   ensure
